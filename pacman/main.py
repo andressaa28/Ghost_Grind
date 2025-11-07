@@ -1,0 +1,2548 @@
+import pygame as pg
+import sys
+import random
+
+pg.init()
+pg.joystick.init()
+
+def tela_inicial():
+    if pg.joystick.get_count() > 0:
+        joystick = pg.joystick.Joystick(0)
+        joystick.init()
+    else:
+        joystick = None
+
+    scale = 23
+    window_width = 740
+    window_height = 620
+    window = pg.display.set_mode((window_width, window_height))
+    pg.display.set_caption("Ghost Grind")
+
+    # Carregar imagem do título
+    titulo_img = pg.image.load('img/titulo.png').convert_alpha()
+
+    # pega tamanho original
+    orig_w, orig_h = titulo_img.get_size()
+
+    # reduz para 70% (ajuste o fator como quiser: 0.5, 0.8, etc.)
+    novo_w = int(orig_w * 0.6)
+    novo_h = int(orig_h * 0.6)
+
+    titulo_img = pg.transform.scale(titulo_img, (novo_w, novo_h))
+    titulo_rect = titulo_img.get_rect(center=(window_width // 2, window_height // 2.1))
+
+    # Fonte
+    font_sub = pg.font.SysFont("Courier New", int(scale * 1.2), bold=True)
+    font_help = pg.font.SysFont("Courier New", int(scale * 0.8), bold=True)
+    
+    clock = pg.time.Clock()
+    rodando = True
+    frame = 0
+
+    while rodando:
+        clock.tick(30)
+        frame += 1
+
+        # Fundo animado (cor piscando levemente)
+        largura, altura = window.get_size()
+        #cor = (32,96,64)
+        for y in range(altura):
+            t = y / altura
+            r = int(46 + (32 - 46) * t)
+            g = int(139 + (96 - 139) * t)
+            b = int(87 + (64 - 87) * t)
+            pg.draw.line(window, (r, g, b), (0, y), (largura, y))
+        #window.fill(cor)
+
+        # Efeito de "pulsar" no título
+        scale_factor = 1 + 0.02 * (pg.time.get_ticks() // 200 % 2 * 2 - 1)
+        titulo_anim = pg.transform.scale(titulo_img, (int(titulo_rect.width * scale_factor), int(titulo_rect.height * scale_factor)))
+        titulo_anim_rect = titulo_anim.get_rect(center=titulo_rect.center)
+        window.blit(titulo_anim, titulo_anim_rect)
+
+        # Texto instrução
+        sub = font_sub.render("Pressione ENTER para iniciar", True, (230,255,100))
+        sub_rect = sub.get_rect(center=(window_width // 2, window_height // 1.2))  
+        # antes estava window_height // 1.5 → agora vai ficar mais para baixo
+        window.blit(sub, sub_rect)
+
+        # texto ajuda
+        help_text = font_help.render("Pressione H para ajuda", True, (255, 255, 255))  # cinza
+        help_rect = help_text.get_rect(center=(window_width // 2, window_height - 20))
+        window.blit(help_text, help_rect)
+        
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                quit()
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_RETURN:  # Enter
+                    rodando = False
+                elif event.key == pg.K_h:  # tecla H abre ajuda
+                    tela_escolha_controle()
+                elif event.key == pg.K_ESCAPE:
+                    pg.quit()
+                    quit()
+            if event.type == pg.JOYBUTTONDOWN:
+                if event.button == 0:  # Botão A
+                    rodando = False
+                elif event.button == 1:  # Botão B
+                    tela_escolha_controle()
+                elif event.button == 7:  # Start
+                    rodando = False
+                elif event.button == 2:  # Back
+                    pg.quit()
+                    quit()
+
+        pg.display.update()
+
+    return escolher_personagem()
+
+def escolher_personagem():
+    if pg.joystick.get_count() > 0:
+        joystick = pg.joystick.Joystick(0)
+        joystick.init()
+    else:
+        joystick = None
+    
+    scale = 23
+    window_width = 740
+    window_height = 620
+    window = pg.display.set_mode((window_width, window_height))
+    font = pg.font.SysFont("Courier New", int(scale * 1.4), bold=True)
+    small_font = pg.font.SysFont("Courier New", int(scale * 0.8), bold=True)
+
+    # Carregando prévias dos personagens
+    personagens = [
+        pg.image.load('img/prin1.png'),
+        pg.image.load('img/personagem1/prin1.png'),
+        pg.image.load('img/personagem2/prin1.png'),
+        pg.image.load('img/personagem3/prin1.png'),]
+
+    # Dobrar o tamanho das imagens
+    largura_img = scale * 4
+    altura_img = scale * 4
+    personagens = [pg.transform.scale(p, (largura_img, altura_img)) for p in personagens]
+
+    selecao = 0
+    clock = pg.time.Clock()
+    escolhendo = True
+
+    # Configurações da grade
+    cols = 2
+    espacamento_x = scale * 3
+    espacamento_y = scale * 5
+
+    # Calcular a largura total da grade para centralizar
+    total_largura = cols * largura_img + (cols - 1) * espacamento_x
+    inicio_x = (window_width - total_largura) // 2
+    inicio_y = scale * 7
+
+    while escolhendo:
+        clock.tick(30)
+        largura, altura = window.get_size()
+        #window.fill((46, 139, 87))  # fundo azul escuro
+        for y in range(altura):
+            t = y / altura
+            r = int(46 + (32 - 46) * t)
+            g = int(139 + (96 - 139) * t)
+            b = int(87 + (64 - 87) * t)
+            pg.draw.line(window, (r, g, b), (0, y), (largura, y))
+
+        # título centralizado
+        titulo = font.render("Escolha seu personagem", True, (230,255,100))
+        window.blit(titulo, ((window_width - titulo.get_width()) // 2, scale))
+
+        # Exibir personagens em grade centralizada
+        for i, img in enumerate(personagens):
+            col = i % cols
+            row = i // cols
+            x = inicio_x + col * (largura_img + espacamento_x)
+            y = inicio_y + row * (altura_img + espacamento_y)
+
+            if i == selecao:
+                pg.draw.rect(window, (230,255,100),
+                             (x - 5, y - 5, img.get_width() + 10, img.get_height() + 10), 2)
+            window.blit(img, (x, y))
+
+        # instruções no rodapé
+        instrucoes = small_font.render("Use ← → ou ↑ ↓ para escolher, ENTER para confirmar", True, (255, 255, 255))
+        window.blit(instrucoes, ((window_width - instrucoes.get_width()) // 2, window_height - scale * 2))
+
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                quit()
+            # teclado
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_LEFT:
+                    selecao = (selecao - 1) % len(personagens)
+                elif event.key == pg.K_RIGHT:
+                    selecao = (selecao + 1) % len(personagens)
+                elif event.key == pg.K_UP:
+                    selecao = (selecao - cols) % len(personagens)
+                elif event.key == pg.K_DOWN:
+                    selecao = (selecao + cols) % len(personagens)
+                elif event.key == pg.K_RETURN:
+                    escolhendo = False
+                elif event.key == pg.K_h:  # tecla H abre ajuda
+                    tela_escolha_controle()
+
+            # Joystick - Botões
+            if event.type == pg.JOYBUTTONDOWN:
+                if event.button == 0:  # A
+                    escolhendo = False
+                elif event.button == 7:  # Start
+                    escolhendo = False
+                elif event.button == 1:  # B
+                    tela_escolha_controle()
+                
+            # Joystick - D-Pad
+            if event.type == pg.JOYHATMOTION:
+                x, y = event.value
+                if x == -1:
+                    selecao = (selecao - 1) % len(personagens)
+                elif x == 1:
+                    selecao = (selecao + 1) % len(personagens)
+                elif y == 1:
+                    selecao = (selecao - cols) % len(personagens)
+                elif y == -1:
+                    selecao = (selecao + cols) % len(personagens)
+
+            # Joystick - Analógico
+            if event.type == pg.JOYAXISMOTION:
+                if event.axis == 0:  # Eixo X
+                    if event.value < -0.5:
+                        selecao = (selecao - 1) % len(personagens)
+                    elif event.value > 0.5:
+                        selecao = (selecao + 1) % len(personagens)
+                elif event.axis == 1:  # Eixo Y
+                    if event.value < -0.5:
+                        selecao = (selecao - cols) % len(personagens)
+                    elif event.value > 0.5:
+                        selecao = (selecao + cols) % len(personagens)
+
+        pg.display.update()
+
+    return selecao
+
+def tela_final(score, selected_character, vitoria):
+    """
+    Exibe a tela final do jogo (Vitória ou Game Over)
+    :param score: pontuação do jogador
+    :param selected_character: personagem escolhido
+    :param vitoria: True para vitória, False para game over
+    """
+
+    if pg.joystick.get_count() > 0:
+        joystick = pg.joystick.Joystick(0)
+        joystick.init()
+    else:
+        joystick = None
+
+    # Configuração da janela
+    window = pg.display.set_mode((740, 620))
+    pg.display.set_caption("Vitória!" if vitoria else "Game Over")
+
+    # Fontes
+    font = pg.font.SysFont("Courier New", 60, bold=True)
+    small_font = pg.font.SysFont("Courier New", 25, bold=True)
+    tiny_font = pg.font.SysFont("Courier New", 18, bold=True)
+
+    rodando = True
+    while rodando:
+        largura, altura = window.get_size()
+        #window.fill((0, 0, 0))
+        for y in range(altura):
+            t = y / altura
+            r = int(46 + (32 - 46) * t)
+            g = int(139 + (96 - 139) * t)
+            b = int(87 + (64 - 87) * t)
+            pg.draw.line(window, (r, g, b), (0, y), (largura, y))
+
+        # Texto principal
+        if vitoria:
+            texto = font.render("VOCÊ VENCEU!", True, (230,255,100))
+        else:
+            texto = font.render("GAME OVER", True, (230,255,100))
+
+        window.blit(texto, texto.get_rect(center=(largura // 2, altura // 4)))
+
+        # Pontuação
+        pontos = small_font.render(f"Sua pontuação: {score}", True, (255, 255, 255))
+        window.blit(pontos, pontos.get_rect(center=(largura // 2, altura // 2)))
+
+        # Instruções
+        if vitoria:
+            instrucoes = ["Pressione ENTER para continuar",
+                          #"Pressione R para voltar ao menu",
+                          "Pressione ESC para sair"]
+        else:
+            instrucoes = ["Pressione ENTER para jogar novamente",
+                          #"Pressione R para voltar ao menu",
+                          "Pressione ESC para sair"]
+
+        start_y = altura // 1.5
+        spacing = 30
+
+        for i, txt in enumerate(instrucoes):
+            line = tiny_font.render(txt, True, (255, 255, 255))
+            rect = line.get_rect(center=(largura // 2, start_y + i * spacing))
+            window.blit(line, rect)
+
+        # Eventos
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                quit()
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_RETURN:
+                    tela_creditos()
+                    tela_inicial()
+                    jogo = PacMan(scale=20, selected_character=selected_character)
+                    if not vitoria:
+                        jogo.reset_game()
+                    return jogo
+                #elif event.key == pg.K_r:
+                    #tela_inicial()
+                    #escolher_personagem()
+                    #rodando = False
+                elif event.key == pg.K_ESCAPE:
+                    pg.quit()
+                    quit()
+                elif event.key == pg.K_h:
+                    tela_ajuda()
+
+            if event.type == pg.JOYBUTTONDOWN:
+                if event.button in (0, 7):  # A ou Start
+                    tela_creditos()
+                    tela_inicial()
+                    return
+                elif event.button == 1:  # B
+                    tela_ajuda()
+                elif event.button == 6:  # Back
+                    pg.quit()
+                    quit()
+
+        pg.display.update()
+
+def tela_transic(level):
+    window = pg.display.set_mode((740, 620))
+
+    font = pg.font.SysFont("Courier New", 60, bold=True)
+    small_font = pg.font.SysFont("Courier New", 25, bold=True)
+    largura, altura = window.get_size()
+
+    if  level == 2:
+        pg.display.set_caption("Próxima Fase")
+        # Fonte principal
+        #window.fill((0, 0, 0))
+        for y in range(altura):
+            # calcula a interpolação entre o verde e o azul com base na posição Y
+            t = y / altura
+            r = int(46 + (32 - 46) * t)
+            g = int(139 + (96 - 139) * t)
+            b = int(87 + (64 - 87) * t)  
+            pg.draw.line(window, (r, g, b), (0, y), (largura, y))
+        # Texto principal
+        titulo = font.render(f"Fase {level}", True, (230,255,100))
+        # Texto menor (centralizado)
+        sub = small_font.render("Prepare-se!", True, (255, 255, 255))
+        window.blit(sub, sub.get_rect(center=(largura // 2, altura // 2)))
+		
+    elif level == 3:
+        pg.display.set_caption("Chegou a Fase 3!")
+        #window.fill((10, 10, 40))  # fundo diferente (azul escuro)
+        for y in range(altura):
+            t = y / altura
+            r = int(46 + (32 - 46) * t)
+            g = int(139 + (96 - 139) * t)
+            b = int(87 + (64 - 87) * t)
+            pg.draw.line(window, (r, g, b), (0, y), (largura, y))
+        # Texto principal em destaque
+        titulo = font.render(f"Fase {level}", True, (230,255,100))
+            # Subtexto
+        sub = small_font.render("Prepare-se o desafio continua!", True, (255, 255, 255))
+        window.blit(sub, sub.get_rect(center=(largura // 2, altura // 1.8)))
+
+    elif level == 4:
+        pg.display.set_caption("Fase 4!")
+        # Fundo com leve gradiente vermelho
+        #for y in range(altura):
+        #    cor = (40 + y // 10, 0, 0)
+        #    pg.draw.line(window, cor, (0, y), (740, y))
+        for y in range(altura):
+            t = y / altura
+            r = int(46 + (32 - 46) * t)
+            g = int(139 + (96 - 139) * t)
+            b = int(87 + (64 - 87) * t)
+            pg.draw.line(window, (r, g, b), (0, y), (largura, y))
+        titulo = font.render(f"Fase {level}", True, (230,255,100))
+        sub = small_font.render("O desafio Começa!", True, (255, 255, 255))
+        window.blit(sub, sub.get_rect(center=(largura // 2, altura // 1.8)))
+
+    elif level == 5:
+        pg.display.set_caption("Fase 5 - O Último Desafio!")
+        # Fundo com gradiente roxo
+        #for y in range(altura):
+        #    cor = (60 + y // 8, 0, 60 + y // 12)
+        #    pg.draw.line(window, cor, (0, y), (740, y))
+        for y in range(altura):
+            t = y / altura
+            r = int(46 + (32 - 46) * t)
+            g = int(139 + (96 - 139) * t)
+            b = int(87 + (64 - 87) * t)
+            pg.draw.line(window, (r, g, b), (0, y), (largura, y))
+        titulo = font.render(f"Fase {level}", True, (230,255,100))
+        sub = small_font.render("Prepare-se para a batalha final!", True, (255, 255, 255))
+        window.blit(sub, sub.get_rect(center=(largura // 2, altura // 1.8)))
+
+    else:
+        # fallback padrão
+        window.fill((0, 0, 0))
+        titulo = font.render(f"Fase {level}", True, (255, 255, 0))
+        sub = small_font.render("Prepare-se!", True, (255, 255, 255))
+
+    window.blit(titulo, titulo.get_rect(center=(largura // 2, altura // 3)))
+    pg.display.update()
+
+    #Aguarda 3 segundos
+    pg.time.wait(3000)
+
+def tela_creditos():
+    window = pg.display.set_mode((740, 620))
+    pg.display.set_caption("Créditos")
+
+    font_titulo = pg.font.SysFont("Courier New", 48, bold=True)
+    font = pg.font.SysFont("Courier New", 26, bold=True)
+    tiny_font = pg.font.SysFont("Courier New", 18, bold=True)
+
+    linhas = [
+        "Programação: Andressa",
+        "Arte visual: Amanda, Bárbara e Giovana"
+    ]
+
+    instrucoes = [
+        "Turma STEAM 23/M1",
+        "Professora Ana Laura"
+    ]
+
+    spacing = 25  # espaçamento menor porque vai ficar no rodapé
+
+    inicio = pg.time.get_ticks()
+    rodando = True
+    while rodando:
+        largura, altura = window.get_size()
+        #window.fill((0, 0, 0))
+        for y in range(altura):
+            t = y / altura
+            r = int(46 + (32 - 46) * t)
+            g = int(139 + (96 - 139) * t)
+            b = int(87 + (64 - 87) * t)
+            pg.draw.line(window, (r, g, b), (0, y), (largura, y))
+
+        # título
+        titulo = font_titulo.render("CRÉDITOS", True, (230,255,100))
+        window.blit(titulo, titulo.get_rect(center=(largura // 2, altura // 4)))
+
+        # linhas principais (meio da tela)
+        for i, texto in enumerate(linhas):
+            surf = font.render(texto, True, (255, 255, 255))
+            window.blit(surf, surf.get_rect(center=(largura // 2, altura // 2 + i * 40)))
+
+        # instruções (rodapé centralizado)
+        for i, txt in enumerate(instrucoes):
+            line = tiny_font.render(txt, True, (255, 255, 255))
+            rect = line.get_rect(center=(largura // 2, altura - 60 + i * spacing))
+            window.blit(line, rect)
+
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit(); quit()
+
+        # fecha sozinho depois de 60s
+        if pg.time.get_ticks() - inicio >= 6000:
+            rodando = False
+            return
+
+        pg.display.update()
+
+def tela_escolha_controle():
+    window = pg.display.set_mode((740, 620))
+    pg.display.set_caption("Escolha o Controle")
+
+    font_titulo = pg.font.SysFont("Courier New", 48, bold=True)
+    font_opcao = pg.font.SysFont("Courier New", 32, bold=True)
+    small_font = pg.font.SysFont("Courier New", 22, bold=True)
+
+    clock = pg.time.Clock()
+    rodando = True
+    escolha = None  # 1 = teclado, 2 = joystick
+
+    while rodando:
+        clock.tick(30)
+        largura, altura = window.get_size()
+        #window.fill((15, 15, 40))
+        for y in range(altura):
+            t = y / altura
+            r = int(46 + (32 - 46) * t)
+            g = int(139 + (96 - 139) * t)
+            b = int(87 + (64 - 87) * t)
+            pg.draw.line(window, (r, g, b), (0, y), (largura, y))
+
+        # título
+        titulo = font_titulo.render("Escolha seu Controle", True, (230,255,100))
+        window.blit(titulo, titulo.get_rect(center=(370, 120)))
+
+        # opções
+        opc1 = font_opcao.render("[1] Teclado", True, (255, 255, 255))
+        window.blit(opc1, opc1.get_rect(center=(370, 250)))
+
+        opc2 = font_opcao.render("[A] Joystick", True, (255, 255, 255))
+        window.blit(opc2, opc2.get_rect(center=(370, 320)))
+
+        instrucao = small_font.render("Para TECLADO aperte [1]  |  Para JOYSTICK aperte [A]", True, (180, 180, 180))
+        window.blit(instrucao, instrucao.get_rect(center=(370, 500)))
+
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                sys.exit()
+
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_1:
+                    escolha = 1
+                    rodando = False
+                elif event.key == pg.K_2:
+                    escolha = 2
+                    rodando = False
+                elif event.key == pg.K_ESCAPE:
+                    pg.quit()
+                    sys.exit()
+                
+            if event.type == pg.JOYBUTTONDOWN:
+                if event.button == 0:  # A
+                    escolha = 2
+                    rodando = False
+                elif event.button == 7:  # Start
+                    escolha = 2
+                    rodando = False
+                elif event.button == 6:  # Back
+                    pg.quit()
+                    sys.exit()
+
+        pg.display.update()
+
+    # chama tela de ajuda correta
+    if escolha == 1:
+        tela_ajuda()
+    elif escolha == 2:
+        tela_ajuda_joystick()
+
+def tela_ajuda_joystick():
+    if pg.joystick.get_count() > 0:
+        joystick = pg.joystick.Joystick(0)
+        joystick.init()
+    else:
+        joystick = None
+
+    window = pg.display.set_mode((740, 620))
+    pg.display.set_caption("Ajuda - Joystick")
+
+    font_titulo = pg.font.SysFont("Courier New", 56, bold=True)
+    font = pg.font.SysFont("Courier New", 24, bold=True)
+    small_font = pg.font.SysFont("Courier New", 20, bold=True)
+
+    # Carregar imagens usadas no jogo
+    img_pocao = pg.image.load("img/pocao.png")
+    img_coracao = pg.image.load("img/coracao.png")
+    img_turbo = pg.image.load("img/turbo.png")
+    img_freeze = pg.image.load("img/freeze.png")
+
+    rodando = True
+    while rodando:
+        largura, altura = window.get_size()
+        for y in range(altura):
+            t = y / altura
+            r = int(46 + (32 - 46) * t)
+            g = int(139 + (96 - 139) * t)
+            b = int(87 + (64 - 87) * t)
+            pg.draw.line(window, (r, g, b), (0, y), (largura, y))
+        # Fundo com gradiente
+        #for y in range(620):
+            #cor = (20, 20 + y // 15, 40 + y // 10)
+            #pg.draw.line(window, cor, (0, y), (740, y))
+
+        # Caixa título
+        pg.draw.rect(window, (0, 0, 0), (60, 30, 620, 70), border_radius=15)
+        titulo = font_titulo.render("AJUDA - JOYSTICK", True, (230,255,100))
+        window.blit(titulo, titulo.get_rect(center=(370, 65)))
+
+        # Caixa controles
+        pg.draw.rect(window, (0, 0, 0), (60, 130, 620, 180), border_radius=15)
+        controles = [
+            "Movimento: Analógico Esquerdo ou D-Pad",
+            "Botão A: Confirmar / Iniciar",
+            "Botão B: Ajuda",
+            "Botão Start: Pausar / Continuar",
+            "Botão Back: Sair"
+        ]
+        for i, txt in enumerate(controles):
+            line = font.render(txt, True, (255, 255, 255))
+            window.blit(line, (100, 140 + i * 32))
+
+        # Caixa itens
+        pg.draw.rect(window, (0, 0, 0), (60, 320, 620, 230), border_radius=15)
+
+        window.blit(img_pocao, (100, 330))
+        window.blit(small_font.render("Poção: deixa os fantasmas vulneráveis", True, (255, 255, 255)), (160, 340))
+
+        window.blit(img_coracao, (100, 390))
+        window.blit(small_font.render("Coração: ganha uma vida extra", True, (255, 255, 255)), (160, 400))
+
+        window.blit(img_turbo, (100, 450))
+        window.blit(small_font.render("Turbo: aumenta a velocidade do Pac-Man", True, (255, 255, 255)), (160, 460))
+
+        window.blit(img_freeze, (100, 510))
+        window.blit(small_font.render("Freeze: congela os fantasmas", True, (255, 255, 255)), (160, 520))
+
+        # Instrução para sair
+        sair = small_font.render("Pressione A ou Start para voltar", True, (200, 200, 200))
+        window.blit(sair, sair.get_rect(center=(370, 580)))
+
+        # Eventos
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                sys.exit()
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_RETURN:  # também permite Enter do teclado
+                    rodando = False
+            if event.type == pg.JOYBUTTONDOWN:
+                if event.button == 0:  # A
+                    rodando = False
+                elif event.button == 7:  # Start
+                    rodando = False
+                elif event.button == 6:  # Back
+                    pg.quit()
+                    sys.exit()
+
+        pg.display.update()
+
+def tela_ajuda():
+    if pg.joystick.get_count() > 0:
+        joystick = pg.joystick.Joystick(0)
+        joystick.init()
+    else:
+        joystick = None
+
+    window = pg.display.set_mode((740, 620))
+    pg.display.set_caption("AJUDA - TECLADO")
+
+    font_titulo = pg.font.SysFont("Courier New", 56, bold=True)
+    font = pg.font.SysFont("Courier New", 26, bold=True)
+    small_font = pg.font.SysFont("Courier New", 20, bold=True)
+
+    # Carregar imagens usadas no jogo
+    img_pocao = pg.image.load("img/pocao.png")
+    img_coracao = pg.image.load("img/coracao.png")
+    img_turbo = pg.image.load("img/turbo.png")
+    img_freeze = pg.image.load("img/freeze.png")
+
+    rodando = True
+    while rodando:
+        largura, altura = window.get_size()
+        # Fundo com gradiente
+        #for y in range(620):
+            #cor = (20, 20 + y // 15, 40 + y // 10)
+            #pg.draw.line(window, cor, (0, y), (740, y))
+        for y in range(altura):
+            t = y / altura
+            r = int(46 + (32 - 46) * t)
+            g = int(139 + (96 - 139) * t)
+            b = int(87 + (64 - 87) * t)
+            pg.draw.line(window, (r, g, b), (0, y), (largura, y))
+
+        # Caixa título
+        pg.draw.rect(window, (0, 0, 0), (60, 30, 620, 70), border_radius=15)
+        titulo = font_titulo.render("AJUDA - TECLADO", True, (230,255,100))
+        window.blit(titulo, titulo.get_rect(center=(370, 65)))
+
+        # Caixa controles
+        pg.draw.rect(window, (0, 0, 0), (60, 130, 620, 120), border_radius=15)
+        controles = [
+            "Movimento: ↑ ↓ ← →  ou  W A S D",
+            "Pause: P",
+            "Sair: ESC"
+        ]
+        for i, txt in enumerate(controles):
+            line = font.render(txt, True, (255, 255, 255))
+            window.blit(line, (100, 140 + i * 35))
+
+        # Caixa itens
+        pg.draw.rect(window, (0, 0, 0), (60, 290, 620, 260), border_radius=15)
+
+        window.blit(img_pocao, (100, 310))
+        window.blit(small_font.render("Poção: deixa os fantasmas vulneráveis", True, (255, 255, 255)), (160, 320))
+
+        window.blit(img_coracao, (100, 370))
+        window.blit(small_font.render("Coração: ganha uma vida extra", True, (255, 255, 255)), (160, 380))
+
+        window.blit(img_turbo, (100, 430))
+        window.blit(small_font.render("Turbo: aumenta a velocidade do Pac-Man", True, (255, 255, 255)), (160, 440))
+
+        window.blit(img_freeze, (100, 490))
+        window.blit(small_font.render("Freeze: congela os fantasmas", True, (255, 255, 255)), (160, 500))
+
+        # Instrução para sair
+        sair = small_font.render("Pressione ENTER para voltar", True, (200, 200, 200))
+        window.blit(sair, sair.get_rect(center=(370, 580)))
+
+        # Eventos
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                sys.exit()
+            # teclado
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_RETURN:  # Voltar
+                    rodando = False
+            # Joystick - Botões
+            if event.type == pg.JOYBUTTONDOWN:
+                if event.button == 0:  # A
+                    rodando = False
+                elif event.button == 7:  # Start
+                    rodando = False
+                elif event.button == 6:  # Back
+                    pg.quit()
+                    sys.exit()
+
+        pg.display.update()
+
+    if pg.joystick.get_count() > 0:
+        joystick = pg.joystick.Joystick(0)
+        joystick.init()
+    else:
+        joystick = None
+
+    window = pg.display.set_mode((740, 620))
+    pg.display.set_caption("AJUDA - TECLADO")
+
+    font_titulo = pg.font.SysFont("Courier New", 56, bold=True)
+    font = pg.font.SysFont("Courier New", 26, bold=True)
+    small_font = pg.font.SysFont("Courier New", 20, bold=True)
+
+    # Carregar imagens usadas no jogo
+    img_pocao = pg.image.load("img/pocao.png")
+    img_coracao = pg.image.load("img/coracao.png")
+    img_turbo = pg.image.load("img/turbo.png")
+    img_freeze = pg.image.load("img/freeze.png")
+
+    rodando = True
+    while rodando:
+        # Fundo com gradiente
+        for y in range(620):
+            cor = (20, 20 + y // 15, 40 + y // 10)
+            pg.draw.line(window, cor, (0, y), (740, y))
+
+        # Caixa título
+        pg.draw.rect(window, (0, 0, 0), (60, 30, 620, 70), border_radius=15)
+        titulo = font_titulo.render("AJUDA - TECLADO", True, (255, 215, 0))
+        window.blit(titulo, titulo.get_rect(center=(370, 65)))
+
+        # Caixa controles
+        pg.draw.rect(window, (0, 0, 0), (60, 130, 620, 120), border_radius=15)
+        controles = [
+            "Movimento: ↑ ↓ ← →  ou  W A S D",
+            "Pause: P",
+            "Sair: ESC"
+        ]
+        for i, txt in enumerate(controles):
+            line = font.render(txt, True, (255, 255, 255))
+            window.blit(line, (100, 140 + i * 35))
+
+        # Caixa itens
+        pg.draw.rect(window, (0, 0, 0), (60, 290, 620, 260), border_radius=15)
+
+        window.blit(img_pocao, (100, 310))
+        window.blit(small_font.render("Poção: deixa os fantasmas vulneráveis", True, (255, 255, 255)), (160, 320))
+
+        window.blit(img_coracao, (100, 370))
+        window.blit(small_font.render("Coração: ganha uma vida extra", True, (255, 255, 255)), (160, 380))
+
+        window.blit(img_turbo, (100, 430))
+        window.blit(small_font.render("Turbo: aumenta a velocidade do Pac-Man", True, (255, 255, 255)), (160, 440))
+
+        window.blit(img_freeze, (100, 490))
+        window.blit(small_font.render("Freeze: congela os fantasmas", True, (255, 255, 255)), (160, 500))
+
+        # Instrução para sair
+        sair = small_font.render("Pressione ENTER para voltar", True, (200, 200, 200))
+        window.blit(sair, sair.get_rect(center=(370, 580)))
+
+        # Eventos
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                sys.exit()
+            # teclado
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_RETURN:  # Voltar
+                    rodando = False
+            # Joystick - Botões
+            if event.type == pg.JOYBUTTONDOWN:
+                if event.button == 0:  # A
+                    rodando = False
+                elif event.button == 7:  # Start
+                    rodando = False
+                elif event.button == 6:  # Back
+                    pg.quit()
+                    sys.exit()
+
+        pg.display.update()
+
+class FloatingText:
+    def __init__(self, text, x, y, font, color=(255, 255, 0)):
+        self.text = text
+        self.x = x
+        self.y = y
+        self.font = font
+        self.color = color
+        self.timer = 60  # ~1 segundo a 60fps
+
+    def update(self):
+        self.y -= 1   # sobe devagar
+        self.timer -= 1
+
+    def draw(self, surface):
+        img = self.font.render(self.text, True, self.color)
+        surface.blit(img, (self.x, self.y))
+
+class PacMan:
+    def __init__(self, scale, selected_character=0):
+        self.scale = scale
+        self.selected_character = selected_character
+        self.level = 1  # Começa no nível 1
+        
+        # Pac-Man
+        char_folder = [
+            "img",  # personagem 0 -> arquivos direto na pasta "img"
+            "img/personagem1",
+            "img/personagem2",
+            "img/personagem3",
+        ][self.selected_character]
+
+        self.white = (255, 255, 255)
+        self.black = (46, 139, 87)
+        self.blue  = (32, 96, 64)
+        
+        scale = 20
+        self.ghost_speed_factor = 1.0  # começa normal
+
+        self.window = pg.display.set_mode((scale * 37, scale * 31))
+        pg.font.init()
+        self.font = pg.font.SysFont("Courier New", scale * 1, bold=True)
+        self.clock = pg.time.Clock()
+        self.scale = scale
+        self.sprite_frame = 0
+        self.sprite_speed = 2
+        #self.boss_speed = 10
+
+        self.score = 0
+        self.lives = 5
+        self.end_game = False
+        self.harmless_mode = False
+        self.harmless_mode_timer = 0
+        self.harmless_mode_ghost_blue   = False
+        self.harmless_mode_ghost_orange = False
+        self.harmless_mode_ghost_pink   = False
+        self.harmless_mode_ghost_red    = False
+        self.harmless_mode_boss = False
+        self.harmless_mode_mini_ghost = False
+        self.harmless_mode_minni_ghost = False
+        self.harmless_mode_mmini_ghost = False
+        # Timer para respawn do boss
+        self.boss_respawn_timer = 0
+
+
+        self.pac_man_pos            = [self.scale * 13.1, self.scale * 22.6]
+        self.pac_man_direction      = [self.scale/16, 0]
+        self.pac_man_next_direction = [self.scale/16, 0]
+
+        self.ghost_blue_pos   = [self.scale * 12, self.scale * 13]
+        self.ghost_orange_pos = [self.scale * 12, self.scale * 14.5]
+        self.ghost_pink_pos   = [self.scale * 14, self.scale * 13]
+        self.ghost_red_pos    = [self.scale * 14, self.scale * 14.5]
+        self.boss_pos = [self.scale * 13, self.scale * 14]
+        self.mini_ghost_pos = [self.scale * 12, self.scale * 14]
+        self.minni_ghost_pos = [self.scale * 14, self.scale * 12]
+        self.mmini_ghost_pos = [self.scale * 14, self.scale * 13]
+        self.ghost_blue_direction   = [0, 0]
+        self.ghost_orange_direction = [0, 0]
+        self.ghost_pink_direction   = [0, 0]
+        self.ghost_red_direction    = [0, 0]
+        self.boss_direction = [0, 0]
+        self.mini_ghost_direction = [0, 0]
+        self.minni_ghost_direction = [0, 0]
+        self.mmini_ghost_direction = [0, 0]
+        self.ghost_blue_next_direction   = [0, 0]
+        self.ghost_orange_next_direction = [0, 0]
+        self.ghost_pink_next_direction   = [0, 0]
+        self.ghost_red_next_direction    = [0, 0]
+        self.boss_next_direction = [0, 0]
+        self.mini_ghost_next_direction = [0, 0]
+        self.minni_ghost_next_direction = [0, 0]
+        self.mmini_ghost_next_direction = [0, 0]
+        self.distance_ghost_blue_to_pac_man   = self.distance_ghost_to_pac_man(self.ghost_blue_pos)
+        self.distance_ghost_orange_to_pac_man = self.distance_ghost_to_pac_man(self.ghost_orange_pos)
+        self.distance_ghost_pink_to_pac_man   = self.distance_ghost_to_pac_man(self.ghost_pink_pos)
+        self.distance_ghost_red_to_pac_man    = self.distance_ghost_to_pac_man(self.ghost_red_pos) 
+        self.distance_boss_to_pac_man = self.distance_ghost_to_pac_man(self.boss_pos)
+        self.distance_mini_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.mini_ghost_pos)
+        self.distance_minni_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.minni_ghost_pos)
+        self.distance_mmini_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.mmini_ghost_pos)
+
+        pac_man_1 = pg.image.load(f'{char_folder}/prin1.png')
+        pac_man_2 = pg.image.load(f'{char_folder}/prin2.png')
+        pac_man_3 = pg.image.load(f'{char_folder}/prin3.png')
+        pac_man_4 = pg.image.load(f'{char_folder}/prin4.png')
+        pac_man_5 = pg.image.load(f'{char_folder}/prin5.png')
+        pac_man_6 = pg.image.load(f'{char_folder}/prin6.png')
+        pac_man_7 = pg.image.load(f'{char_folder}/prin7.png')
+        pac_man_8 = pg.image.load(f'{char_folder}/prin8.png')
+        pac_man_9 = pg.image.load(f'{char_folder}/prin9.png')
+        pac_man_10 = pg.image.load(f'{char_folder}/prin10.png')
+        pac_man_11 = pg.image.load(f'{char_folder}/prin11.png')
+
+        self.pac_man_1 = pg.transform.scale(pac_man_1, (self.scale * 1.3, self.scale * 1.3))
+        self.pac_man_2 = pg.transform.scale(pac_man_2, (self.scale * 1.3, self.scale * 1.3))
+        self.pac_man_3 = pg.transform.scale(pac_man_3, (self.scale * 1.3, self.scale * 1.3))
+        self.pac_man_4 = pg.transform.scale(pac_man_4, (self.scale * 1.3, self.scale * 1.3))
+        self.pac_man_5 = pg.transform.scale(pac_man_5, (self.scale * 1.3, self.scale * 1.3))
+        self.pac_man_6 = pg.transform.scale(pac_man_6, (self.scale * 1.3, self.scale * 1.3))
+        self.pac_man_7 = pg.transform.scale(pac_man_7, (self.scale * 1.3, self.scale * 1.3))
+        self.pac_man_8 = pg.transform.scale(pac_man_8, (self.scale * 1.3, self.scale * 1.3))
+        self.pac_man_9 = pg.transform.scale(pac_man_9, (self.scale * 1.3, self.scale * 1.3))
+        self.pac_man_10 = pg.transform.scale(pac_man_10, (self.scale * 1.3, self.scale * 1.3))
+        self.pac_man_11 = pg.transform.scale(pac_man_11, (self.scale * 1.3, self.scale * 1.3))
+
+        # Blue Ghost
+        ghost_blue_down_right_0 = pg.image.load('img/fan_marshmallow1.png')
+        ghost_blue_down_right_1 = pg.image.load('img/fan_marshmallow2.png')
+        self.ghost_blue_down_right_0 = pg.transform.scale(ghost_blue_down_right_0, (self.scale * 1.3, self.scale * 1.3))
+        self.ghost_blue_down_right_1 = pg.transform.scale(ghost_blue_down_right_1, (self.scale * 1.3, self.scale * 1.3))
+
+        # Orange Ghost
+        ghost_orange_down_right_0 = pg.image.load('img/fan_roxo1.png')
+        ghost_orange_down_right_1 = pg.image.load('img/fan_roxo2.png')
+        self.ghost_orange_down_right_0 = pg.transform.scale(ghost_orange_down_right_0, (self.scale * 1.3, self.scale * 1.3))
+        self.ghost_orange_down_right_1 = pg.transform.scale(ghost_orange_down_right_1, (self.scale * 1.3, self.scale * 1.3))
+
+        # Pink Ghost
+        ghost_pink_down_right_0 = pg.image.load('img/fan_verde1.png')
+        ghost_pink_down_right_1 = pg.image.load('img/fan_verde2.png')
+        self.ghost_pink_down_right_0 = pg.transform.scale(ghost_pink_down_right_0, (self.scale * 1.3, self.scale * 1.3))
+        self.ghost_pink_down_right_1 = pg.transform.scale(ghost_pink_down_right_1, (self.scale * 1.3, self.scale * 1.3))
+
+        # Red Ghost
+        ghost_red_down_right_0 = pg.image.load('img/dog1.png')
+        ghost_red_down_right_1 = pg.image.load('img/dog2.png')
+        self.ghost_red_down_right_0 = pg.transform.scale(ghost_red_down_right_0, (self.scale * 1.3, self.scale * 1.3))
+        self.ghost_red_down_right_1 = pg.transform.scale(ghost_red_down_right_1, (self.scale * 1.3, self.scale * 1.3))
+
+        # boss
+        boss_down_right_0 = pg.image.load('img/boss.png')
+        boss_down_right_1 = pg.image.load('img/boss1.png')
+        self.boss_down_right_0 = pg.transform.scale(boss_down_right_0, (self.scale * 1.3, self.scale * 1.3))
+        self.boss_down_right_1 = pg.transform.scale(boss_down_right_1, (self.scale * 1.3, self.scale * 1.3))
+
+        # harmless boss
+        boss_harmless_0 = pg.image.load('img/boss3.png')
+        boss_harmless_1 = pg.image.load('img/boss4.png')
+        self.boss_harmless_0 = pg.transform.scale(boss_harmless_0, (self.scale * 1.3, self.scale * 1.3))
+        self.boss_harmless_1 = pg.transform.scale(boss_harmless_1, (self.scale * 1.3, self.scale * 1.3))
+        
+        # Harmless Ghost
+        ghost_harmless_0       = pg.image.load('img/fan_marshmallow7.png')
+        ghost_harmless_1       = pg.image.load('img/fan_roxo8.png')
+        self.ghost_harmless_0 = pg.transform.scale(ghost_harmless_0, (self.scale * 1.3, self.scale * 1.3))
+        self.ghost_harmless_1 = pg.transform.scale(ghost_harmless_1, (self.scale * 1.3, self.scale * 1.3))
+
+        # mini ghost
+        mini_ghost       = pg.image.load('img/mini_ghost.png')
+        mini_ghost1      = pg.image.load('img/mini_ghost1.png')
+        minni_ghost      = pg.image.load('img/mini_ghost2.png')
+        minni_ghost1      = pg.image.load('img/mini_ghost3.png')
+        mmini_ghost      = pg.image.load('img/mini_ghost4.png')
+        mmini_ghost1      = pg.image.load('img/mini_ghost5.png')
+        self.mini_ghost = pg.transform.scale(mini_ghost, (self.scale * 1.3, self.scale * 1.3))
+        self.mini_ghost1 = pg.transform.scale(mini_ghost1, (self.scale * 1.3, self.scale * 1.3))
+        self.minni_ghost = pg.transform.scale(minni_ghost, (self.scale * 1.3, self.scale * 1.3))
+        self.minni_ghost1 = pg.transform.scale(minni_ghost1, (self.scale * 1.3, self.scale * 1.3))
+        self.mmini_ghost = pg.transform.scale(mmini_ghost, (self.scale * 1.3, self.scale * 1.3))
+        self.mmini_ghost1 = pg.transform.scale(mmini_ghost1, (self.scale * 1.3, self.scale * 1.3))
+
+        # Carregar imagem para o ponto de poder
+        self.img_power = pg.image.load('img/pocao.png').convert_alpha()
+        self.img_power = pg.transform.scale(self.img_power, (int(self.scale * 2), int(self.scale * 2)))
+
+        # imagem coração 
+        self.img_life = pg.image.load('img/coracao.png').convert_alpha()
+        self.img_life = pg.transform.scale(self.img_life, (int(self.scale * 1.5), int(self.scale * 1.5)))
+        self.floating_texts = []
+
+        # imagem turbo
+        self.img_turbo = pg.image.load('img/turbo.png').convert_alpha()
+        self.img_turbo = pg.transform.scale(self.img_turbo, (int(self.scale * 2), int(self.scale * 2)))
+
+        # imagem freeze
+        self.img_freeze = pg.image.load('img/freeze.png').convert_alpha()
+        self.img_freeze = pg.transform.scale(self.img_freeze, (int(self.scale * 2), int(self.scale * 2)))
+
+        # atributos do turbo
+        self.turbo_mode = False
+        self.turbo_timer = 0
+        self.turbo_duration = 420  # ~7 segundos a 60fps
+        self.normal_speed = self.scale / 16
+        self.turbo_speed = self.scale / 8
+        self.score_turbo_levels = {
+            1: 50,   # fase 1 precisa 50 pontos
+            2: 550,  # fase 2 precisa 100 pontos
+            3: 800,   # fase 3 precisa 200 pontos
+            4: 1340,
+            5: 1780
+            }
+
+        # Freeze (congelar fantasmas)
+        self.freeze_mode = False
+        self.freeze_timer = 0
+        self.freeze_duration = 360  # 6 segundos a 60fps
+        self.score_freeze_levels = {
+            1: 70,  # fase 1
+            2: 500,  # fase 2
+            3: 860,  # fase 3
+            4: 1200,
+            5: 1900
+        }
+    
+        # mapa original
+        self.map_original = [
+            ['#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'],
+            ['#','.','.','.','.','.','.','.','.','.','.','.','.','#','#','.','.','.','.','.','.','.','.','.','.','.','.','#'],
+            ['#','.','#','#','#','#','.','#','#','#','#','#','.','#','#','.','#','#','#','#','#','.','#','#','#','#','.','#'],
+            ['#','o','#','#','#','#','.','#','#','#','#','#','.','#','#','.','#','#','#','#','#','.','#','#','#','#','o','#'],
+            ['#','.','#','#','#','#','.','#','#','#','#','#','.','#','#','.','#','#','#','#','#','.','#','#','#','#','.','#'],
+            ['#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','f','.','.','.','#'],
+            ['#','.','#','#','#','#','.','#','#','.','#','#','#','#','#','#','#','#','.','#','#','.','#','#','#','#','.','#'],
+            ['#','.','#','#','#','#','.','#','#','.','#','#','#','#','#','#','#','#','.','#','#','.','#','#','#','#','.','#'],
+            ['#','.','.','.','.','.','.','#','#','.','.','.','.','#','#','.','.','.','.','#','#','.','.','.','.','.','.','#'],
+            ['#','#','#','#','#','#','.','#','#','#','#','#',' ','#','#',' ','#','#','#','#','#','.','#','#','#','#','#','#'],
+            [' ',' ',' ',' ',' ','#','.','#','#','#','#','#',' ','#','#',' ','#','#','#','#','#','.','#',' ',' ',' ',' ',' '],
+            [' ',' ',' ',' ',' ','#','.','#','#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#','#','.','#',' ',' ',' ',' ',' '],
+            [' ',' ',' ',' ',' ','#','.','#','#',' ','#','#','#','-','-','#','#','#',' ','#','#','.','#',' ',' ',' ',' ',' '],
+            ['#','#','#','#','#','#','.','#','#',' ','#',' ',' ',' ',' ',' ',' ','#',' ','#','#','.','#','#','#','#','#','#'],
+            [' ',' ',' ',' ',' ',' ','.',' ',' ',' ','#',' ',' ',' ',' ',' ',' ','#',' ',' ',' ','.',' ',' ',' ',' ',' ',' '],
+            ['#','#','#','#','#','#','.','#','#',' ','#',' ',' ',' ',' ',' ',' ','#',' ','#','#','.','#','#','#','#','#','#'],
+            [' ',' ',' ',' ',' ','#','.','#','#',' ','#','#','#','#','#','#','#','#',' ','#','#','.','#',' ',' ',' ',' ',' '],
+            [' ',' ',' ',' ',' ','#','.','#','#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#','#','.','#',' ',' ',' ',' ',' '],
+            [' ',' ',' ',' ',' ','#','.','#','#',' ','#','#','#','#','#','#','#','#',' ','#','#','.','#',' ',' ',' ',' ',' '],
+            ['#','#','#','#','#','#','.','#','#',' ','#','#','#','#','#','#','#','#',' ','#','#','.','#','#','#','#','#','#'],
+            ['#','.','.','.','.','.','.','.','.','.','.','.','.','#','#','.','.','.','.','.','.','.','.','.','.','.','.','#'],
+            ['#','.','#','#','#','#','.','#','#','#','#','#','.','#','#','.','#','#','#','#','#','.','#','#','#','#','.','#'],
+            ['#','.','#','#','#','#','.','#','#','#','#','#','.','#','#','.','#','#','#','#','#','.','#','#','#','#','.','#'],
+            ['#','o','.','.','#','#','.','.','.','.','.','.','.',' ',' ','.','.','.','.','.','.','.','#','#','.','.','o','#'],
+            ['#','#','#','.','#','#','.','#','#','.','#','#','#','#','#','#','#','#','.','#','#','.','#','#','.','#','#','#'],
+            ['#','#','#','.','#','#','.','#','#','.','#','#','#','#','#','#','#','#','.','#','#','.','#','#','.','#','#','#'],
+            ['#','.','.','.','.','.','v','#','#','.','.','.','.','#','#','.','.','.','.','#','#','.','.','.','.','.','.','#'],
+            ['#','.','#','#','#','#','#','#','#','#','#','#','.','#','#','.','#','#','#','#','#','#','#','#','#','#','.','#'],
+            ['#','.','#','#','#','#','#','#','#','#','#','#','.','#','#','.','#','#','#','#','#','#','#','#','#','#','.','#'],
+            ['#','.','.','.','.','.','t','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#'],
+            ['#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#']]
+        
+        self.map2_original = [
+            ['#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'],
+            ['#','.','.','o','.','.','.','#','#','.','.','.','.','#','#','.','.','.','.','#','#','.','.','.','.','.','.','#'],
+            ['#','.','#','#','#','#','.','#','#','.','#','#','.','#','#','.','#','#','.','#','#','.','#','#','#','#','.','#'],
+            ['#','.','#','#','#','#','.','#','#','.','#','#','.','#','#','.','#','#','.','#','#','.','#','#','#','#','.','#'],
+            ['#','.','.','#','#','.','.','#','#','.','#','#','.','.','.','.','#','#','.','#','#','.','o','#','#','.','.','#'],
+            ['#','#','.','#','#','.','#','#','#','.','#','#','#','#','#','#','#','#','.','#','#','#','.','#','#','.','#','#'],
+            ['#','#','.','.','.','.','.','.','.','.','#','#','#','#','#','#','#','#','.','.','.','.','.','.','.','.','#','#'],
+            ['#','#','.','#','#','.','#','#','#','.','.','.','.','#','#','.','.','.','.','#','#','#','.','#','#','.','#','#'],
+            ['#','.','.','#','#','.','.','#','#','.','#','#','.','#','#','.','#','#','.','#','#','.','.','#','#','.','#','#'],
+            ['#','.','#','#','#','#','.','#','#','.','#','#','.','#','#','.','#','#','.','#','#','.','#','#','#','.','.','#'],
+            ['#','.','#','#','#','#','.','#','#','.','#','#','.','#','#','.','#','#','.','#','#','f','#','#','#','#','.','#'],
+            ['#','v','#','#','#','#','.','#','#','.','.','.','.','.','.','.','.','.','.','#','#','.','#','#','#','#','.','#'],
+            ['#','.','.','.','.','.','.','#','#','.','#','#','#','-','-','#','#','#','.','#','#','.','.','.','.','.','.','#'],
+            ['#','#','#','#','#','#','.','.','.','.','#',' ',' ',' ',' ',' ',' ','#','.','.','.','.','#','#','#','#','#','#'],
+            ['#','#','#','#','#','#','.','#','#','.','#',' ',' ',' ',' ',' ',' ','#','.','#','#','.','#','#','#','#','#','#'],
+            [' ',' ',' ',' ',' ',' ','.','#','#','.','#',' ',' ',' ',' ',' ',' ','#','.','#','#','.',' ',' ',' ',' ',' ',' '],
+            ['#','#','#','#','#','#','.','#','#','.','#','#','#','#','#','#','#','#','.','#','#','.','#','#','#','#','#','#'],
+            ['#','#','#','#','#','#','.','.','.','.','#','#',' ',' ',' ',' ','#','#','.','.','.','.','#','#','#','#','#','#'],
+            ['#','.','.','.','.','.','.','#','#','.','#','#',' ','#','#',' ','#','#','.','#','#','.','.','.','.','.','.','#'],
+            ['#','.','#','#','#','#','.','#','#','.',' ',' ',' ','#','#',' ',' ',' ','.','#','#','.','#','#','#','#','.','#'],
+            ['#','.','#','#','#','#','.','#','#','#','#','#',' ','#','#',' ','#','#','#','#','#','.','#','#','#','#','.','#'],
+            ['#','.','#','#','#','#','.','#','#','#','#','#',' ','#','#',' ','#','#','#','#','#','.','#','#','#','#','.','#'],
+            ['#','.','#','#','#','#','.','#','#','#','#','#',' ','#','#',' ','#','#','#','#','#','.','#','#','#','#','.','#'],
+            ['#','o','.','.','#','#','.','.','.','.','.','.','.',' ',' ','.','.','.','.','.','.','.','#','#','.','.','o','#'],
+            ['#','#','#','.','#','#','.','#','#','.','#','#','#','#','#','#','#','#','.','#','#','.','#','#','.','#','#','#'],
+            ['#','#','#','.','#','#','.','#','#','.','#','#','#','#','#','#','#','#','.','#','#','.','#','#','.','#','#','#'],
+            ['#','.','.','.','.','.','.','#','#','.','.','.','.','#','#','.','.','.','.','#','#','.','.','.','.','.','.','#'],
+            ['#','.','#','#','#','#','#','#','#','#','#','#','.','#','#','.','#','#','#','#','#','#','#','#','#','#','.','#'],
+            ['#','f','#','#','#','#','#','#','#','#','#','#','.','#','#','.','#','#','#','#','#','#','#','#','#','#','.','#'],
+            ['#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','v','.','.','.','.','.','.','.','.','.','.','.','#'],
+            ['#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#']]
+
+        self.map3_original = [
+            ['#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'],
+            ['#','.','.','.','.','.','.','.','#','#','#','#','#','#','#','#','#','#','#','#','.','.','.','.','.','.','.','#'],
+            ['#','.','#','#','#','.','#','.','.','#','#','#','#','.','.','#','#','#','#','.','.','#','.','#','#','#','.','#'],
+            ['#','o','#','#','.','.','#','#','.','.','#','.','.','.','.','.','.','#','.','.','#','#','.','.','#','#','t','#'],
+            ['#','.','#','.','.','.','.','#','#','.','.','.','#','#','#','#','.','.','.','#','#','.','.','.','.','#','.','#'],
+            ['#','.','.','.','#','#','.','.','#','#','#','#','#','#','#','#','#','#','#','#','.','.','#','#','.','.','.','#'],
+            ['#','.','#','.','#','#','#','.','.','#','#','#','.','.','.','.','#','#','#','.','.','#','#','#','.','#','.','#'],
+            ['#','.','#','.','.','#','#','#','.','.','.','.','.','#','#','.','.','.','.','.','#','#','#','.','.','#','.','#'],
+            ['#','.','#','#','.','.','#','#','#','#','.','#','.','.','.','.','#','.','#','#','#','#','.','.','#','#','.','#'],
+            ['#','.','.','.','.','.','.','#','#','#','.','#','#','#','#','#','#','.','#','#','#','.','.','.','.','.','.','#'],
+            ['#','#','#','#','.','#','.','#','#','.','.','.','#','#','#','#','.','.','.','#','#','.','#','.','#','#','#','#'],
+            [' ',' ',' ','#','.','#','.','#','#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#','#','.','#','.','#',' ',' ',' '],
+            [' ',' ',' ','#','.','#','.','#','#',' ','#','#','#','-','-','#','#','#',' ','#','#','.','#','.','#',' ',' ',' '],
+            [' ',' ',' ','#','.','#','.','#','#',' ','#',' ',' ',' ',' ',' ',' ','#',' ','#','#','.','#','.','#',' ',' ',' '],
+            ['#','#','#','#','.','#','.',' ',' ',' ','#',' ',' ',' ',' ',' ',' ','#',' ',' ',' ','.','#','.','#','#','#','#'],
+            [' ',' ',' ',' ','.','.','.','#','#',' ','#',' ',' ',' ',' ',' ',' ','#',' ','#','#','.','o','.',' ',' ',' ',' '],
+            ['#','#','#','#','#','#','.','#','#',' ','#','#','#','#','#','#','#','#',' ','#','#','.','#','#','#','#','#','#'],
+            [' ',' ',' ',' ',' ','#','.','#','#',' ','.','.','#','#','#','#','.','.',' ','#','#','.','#',' ',' ',' ',' ',' '],
+            [' ',' ',' ',' ',' ','#','.','#','#','#','#','.','.','#','#','.','.','#','#','#','#','.','#',' ',' ',' ',' ',' '],
+            ['#','#','#','#','#','#','.','.','.','#','.','f','.','.','.','.','.','.','#','.','.','.','#','#','#','#','#','#'],
+            ['#','#','.','.','.','.','.','#','.','.','.','#','.','#','#','.','#','.','.','.','#','.','.','.','.','.','#','#'],
+            ['#','.','.','#','#','.','#','#','#','.','#','#','.','.','.','.','#','#','.','#','#','#','.','#','#','.','.','#'],
+            ['#','.','#','#','#','.','#','#','#','.','#','#','.','#','#','.','#','#','.','#','#','#','.','#','#','#','.','#'],
+            ['#','.','.','o','#','.','#','#','#','.','.','.','.','.','.','.','.','.','.','#','#','#','.','#','.','.','.','#'],
+            ['#','#','#','.','#','.','.','#','#','.','#','#','.','#','#','.','#','#','.','#','#','.','.','#','.','#','#','#'],
+            ['#','#','#','.','#','#','.','.','.','.','.','.','.','#','#','.','.','.','.','.','.','.','#','#','.','#','#','#'],
+            ['#','.','.','.','#','#','.','#','#','.','#','#','.','.','.','.','#','#','.','#','#','.','#','#','.','.','.','#'],
+            ['#','#','#','.','.','.','.','#','#','.','.','.','.','#','#','.','.','.','.','#','#','.','.','.','.','#','#','#'],
+            ['#','#','#','#','#','.','#','#','.','.','#','.','.','.','.','.','.','#','.','.','#','#','.','#','#','#','#','#'],
+            ['#','.','.','.','.','.','.','.','.','#','#','.','#','#','#','#','.','#','#','.','.','.','.','.','.','.','v','#'],
+            ['#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#']]
+        
+        self.map4_original = [
+            ['#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'],           
+            ['#','.','#','#','#','#','#','#','.','.','.','.','.','.','.','.','.','.','.','.','#','#','#','#','#','#','.','#'],           
+            ['#','.','.','.','#','#','.','.','.','#','#','#','o','#','#','.','#','#','#','.','.','.','#','#','.','.','.','#'],            
+            ['#','.','#','.','.','.','.','#','.','.','#','.','.','.','.','.','.','#','.','.','#','.','.','.','.','#','.','#'],           
+            ['#','.','#','#','#','.','#','#','#','.','.','.','#','#','#','#','.','.','.','#','#','#','.','#','#','#','.','#'],           
+            ['#','.','.','.','.','.','.','.','.','.','#','.','.','#','#','.','.','#','.','.','.','.','f','.','.','.','.','#'],          
+            ['#','#','#','.','#','#','#','#','#','.','#','#','.','#','#','.','#','#','.','#','#','#','#','#','.','#','#','#'],
+            ['#','#','#','.','.','.','.','.','.','.','#','#','.','#','#','.','#','#','.','.','.','.','.','.','.','#','#','#'],        
+            ['#','#','#','#','#','#','.','#','.','.','.','#','.','#','#','.','#','.','.','.','#','.','#','#','#','#','#','#'],
+            [' ','.','.','.','.','.','.','#','#','#','.','.','.','.','.','.','.','.','#','#','#','.','.','.','.','.','.',' '],            
+            ['#','#','#','#','.','#','.','#','#','#','#','#','.','#','#','.','#','#','#','#','#','.','#','.','#','#','#','#'],            
+            ['#','#','#','#','.','#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#','.','#','#','#','#'],            
+            ['#','#','.','.','.','#','#','#','#','.','#','#','#','-','-','#','#','#','.','#','#','#','#','.','.','.','#','#'],
+            ['#','.','.','#','.','#','#','.','#','.','#',' ',' ',' ',' ',' ',' ','#','.','#','.','#','#','.','#','.','.','#'],
+            ['#','t','#','#','.','#','#','.','.','.','#',' ',' ',' ',' ',' ',' ','#','.','.','.','#','#','.','#','#','.','#'],
+            ['#','.','.','.','.','.','#','.','#','.','#',' ',' ',' ',' ',' ',' ','#','.','#','.','#','.','.','.','.','.','#'],            
+            ['#','.','#','#','#','.','.','.','#','.','#','#','#','#','#','#','#','#','.','#','.','.','.','#','#','#','.','#'],            
+            ['#','.','#','#','#','.','.','#','#','.','.','.','.','.','.','.','.','.','.','#','#','.','.','#','#','#','.','#'],            
+            ['#','.','#','#','.','.','#','#','.','.','#','#','#','.','.','#','#','#','.','.','#','#','.','.','#','#','.','#'],         
+            ['#','.','#','#','.','#','#','#','.','#','#','#','#','.','.','#','#','#','#','.','#','#','#','.','#','#','.','#'],           
+            ['#','.','.','.','.','.','.','.','.','#','#','.','.','.','t','.','.','#','#','.','.','.','.','.','.','.','.','#'],            
+            ['#','.','#','#','#','#','#','#','.','.','.','.','#','#','#','#','.','.','.','.','#','#','#','#','#','#','o','#'],          
+            ['#','.','#','.','.','.','#','#','.','#','#','.','#','#','#','#','.','#','#','.','#','#','.','.','.','#','.','#'],
+            ['#','.','#','.','#','.','#','#','.','.','.','.','.',' ',' ','.','.','.','.','.','#','#','.','#','.','#','.','#'],            
+            ['#','.','#','.','#','.','.','#','.','#','#','#','#','#','#','#','#','#','#','.','#','.','.','#','.','#','.','#'],           
+            ['#','.','#','.','#','#','.','#','.','#','#','#','#','#','#','#','#','#','#','.','#','.','#','#','.','#','.','#'],            
+            ['#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#'],            
+            ['#','o','#','#','#','#','#','.','#','.','#','.','#','#','#','#','.','#','.','#','.','#','#','#','#','#','.','#'],           
+            ['#','.','.','.','#','#','.','.','#','.','.','.','#','.','.','#','.','.','.','#','.','.','#','#','.','.','.','#'],            
+            ['#','.','#','.','.','.','.','#','#','#','#','.','.','.','.','v','.','#','#','#','#','.','.','.','.','#','.','#'],            
+            ['#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#']]
+
+        self.map5_original = [
+            ['#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'],
+            ['#','#','#','#','.','.','.','.','#','#','#','#','#','#','#','#','#','#','#','#','.','.','.','.','#','#','#','#'],
+            ['#','.','.','o','.','#','#','.','.','.','#','#','.','#','#','.','#','#','.','.','.','#','#','.',',','.','.','#'],
+            ['#','.','#','#','#','#','#','#','#','.','.','#','.','#','#','.','#','.','.','#','#','#','#','#','#','#','o','#'],
+            ['#','.','.','#','#','#','#','#','#','#','.','#','.','.','.','.','#','.','#','#','#','#','#','#','#','.','.','#'],
+            ['#','#','.','.','.','.','#','#','.','.','.','#','.','#','#','.','#','.','.','.','#','#','.','f','.','.','#','#'],
+            ['#','.','.','#','#','.','#','.','.','#','#','#','.','#','#','.','#','#','#','.','.','#','.','#','#','.','.','#'],
+            ['#','.','#','#','#','.','.','.','#','#','.','.','.','#','#','.','.','.','#','#','.','.','.','#','#','#','.','#'],
+            ['#','.','.','#','#','#','#','.','.','.','.','#','.','.','.','.','#','.','.','.','.','#','#','#','#','.','.','#'],
+            ['#','#','.','.','.','#','.','.','#','.','#','#',' ','#','#',' ','#','#','.','#','.','.','#','.','.','.','#','#'],
+            ['#','#','#','#',' ','#','.','#','#','.','#','.',' ','.','.',' ','.','#','.','#','#','.','#',' ','#','#','#','#'],
+            [' ',' ',' ','#',' ','.','.','#','.',' ','.',' ',' ',' ',' ',' ',' ','.',' ','.','#','.','.',' ','#',' ',' ',' '],
+            [' ',' ',' ','#',' ','#','#','#','.','#','#','#','#','-','-','#','#','#','#','.','#','#','#',' ','#',' ',' ',' '],
+            [' ',' ',' ','#',' ','#','#','#','.',' ','#',' ',' ',' ',' ',' ',' ','#',' ','.','#','#','#',' ','#',' ',' ',' '],
+            ['#','#','#','#',' ',' ','.','#','#',' ','#',' ',' ',' ',' ',' ',' ','#',' ','#','#','.',' ',' ','#','#','#','#'],
+            [' ',' ',' ',' ',' ','#','.',' ','#',' ','#',' ',' ',' ',' ',' ',' ','#',' ','#',' ','.','#',' ',' ',' ',' ',' '],
+            ['#','#','#','#',' ','.','.','#','#',' ','#','#','#','#','#','#','#','#',' ','#','#','.','.',' ','#','#','#','#'],
+            [' ',' ',' ','#','#','.','#','#','.',' ',' ','.','.','.','.','.','.',' ',' ','.','#','#','.','#','#',' ',' ',' '],
+            [' ',' ',' ','#','#','.','.','.','.','#','.','.','#','#','#','#','.','.','#','.','.','.','.','#','#',' ',' ',' '],
+            [' ',' ',' ','#','.',' ','#','#','#','#','#','.','#','#','#','#','.','#','#','#','#','#','.','.','#',' ',' ',' '],
+            ['#','#','#','#','.','#','#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#','#','.','#','#','#','#'],
+            ['#','.','.','.','.','#','#','.','#','#','.','#','#','#','#','#','#','.','#','#','.','#','#','.','.','.','.','#'],
+            ['#','.','#','.','#','#','.','.','#','#','.','#','#','.','.','#','#','.','#','#','.','.','#','#','.','#','.','#'],
+            ['#','o','.','.','.','.','.','#','#','#','.','.','.',' ',' ','.','.','.','#','#','#','.','.','.','.','.','.','#'],
+            ['#','.','#','.','#','#','.','#','#','.','.','.','#','#','#','#','.','.','.','#','#','.','#','#','.','#','.','#'],
+            ['#','.','#','.','.','#','.','#','.','.','#','.','.','.','.','.','.','#','.','.','#','.','#','.','.','#','.','#'],
+            ['#','.','#','#','#','#','.','#','.','#','#','#','.','#','#','.','#','#','#','.','#','.','#','#','#','#','.','#'],
+            ['#','.','.','.','.','.','.','#','.','#','.','.','.','.','.','.','.','.','#','.','#','t','.','.','.','.','.','#'],
+            ['#','#','#','.','#','#','#','#','.','#','#','.','#','.','.','#','.','#','#','.','#','#','#','#','#','#','.','#'],
+            ['#','v','.','.','.','.','.','.','.','.','.','.','#','#','#','#','.','.','.','.','.','.','.','.','.','.','.','#'],
+            ['#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#']]
+        
+        self.map  = [linha[:] for linha in self.map_original]
+        self.map2 = [linha[:] for linha in self.map2_original]
+        self.map3 = [linha[:] for linha in self.map3_original]
+        self.map4 = [linha[:] for linha in self.map4_original]
+        self.map5 = [linha[:] for linha in self.map5_original]
+
+    @property
+    def score_turbo(self):
+        return self.score_turbo_levels.get(self.level, 50)
+
+    @property
+    def score_freeze(self):
+        return self.score_freeze_levels.get(self.level, 100)
+    
+    def clear_window(self):
+        pg.draw.rect(self.window, self.black, (0, 0, self.window.get_width(), self.window.get_height()))
+
+    def get_speed(self):
+        return self.turbo_speed if self.turbo_mode else self.normal_speed
+
+    def move(self, key):
+        if key == 'r':
+            self.restart()
+        if key == 'w' or key == 'up':
+            if self.pac_man_direction[0] == 0 and self.pac_man_direction[1] > 0:
+                self.pac_man_direction[0] = 0
+                self.pac_man_direction[1] = -self.get_speed()
+                self.pac_man_next_direction[0] = 0
+                self.pac_man_next_direction[1] = -self.get_speed()
+            elif self.pac_man_direction[0] != 0 and self.pac_man_direction[1] == 0:
+                self.pac_man_next_direction[0] = 0
+                self.pac_man_next_direction[1] = -self.get_speed()
+        elif key == 'a' or key == 'left':
+            if self.pac_man_direction[0] > 0 and self.pac_man_direction[1] == 0:
+                self.pac_man_direction[0] = -self.get_speed()
+                self.pac_man_direction[1] = 0
+                self.pac_man_next_direction[0] = -self.get_speed()
+                self.pac_man_next_direction[1] = 0
+            elif self.pac_man_direction[0] == 0 and self.pac_man_direction[1] != 0:
+                self.pac_man_next_direction[0] = -self.get_speed()
+                self.pac_man_next_direction[1] = 0
+        elif key == 's' or key == 'down':
+            if self.pac_man_direction[0] == 0 and self.pac_man_direction[1] < 0:
+                self.pac_man_direction[0] = 0
+                self.pac_man_direction[1] = self.get_speed()
+                self.pac_man_next_direction[0] = 0
+                self.pac_man_next_direction[1] = self.get_speed()
+            elif self.pac_man_direction[0] != 0 and self.pac_man_direction[1] == 0:
+                self.pac_man_next_direction[0] = 0
+                self.pac_man_next_direction[1] = self.get_speed()
+        elif key == 'd' or key == 'right':
+            if self.pac_man_direction[0] < 0 and self.pac_man_direction[1] == 0:
+                self.pac_man_direction[0] = self.get_speed()
+                self.pac_man_direction[1] = 0
+                self.pac_man_next_direction[0] = self.get_speed()
+                self.pac_man_next_direction[1] = 0
+            elif self.pac_man_direction[0] == 0 and self.pac_man_direction[1] != 0:
+                self.pac_man_next_direction[0] = self.get_speed()
+                self.pac_man_next_direction[1] = 0       
+    
+    def board(self):
+        for y in range(len(self.map)):
+            for x in range(len(self.map[0])):
+                cell = self.map[y][x]
+            
+                # paredes
+                if cell == '#':
+                    pg.draw.rect(self.window, self.blue, (x * self.scale, y * self.scale, self.scale, self.scale))
+            
+                # portas
+                elif cell == '-':
+                    pg.draw.rect(self.window, self.white, (x * self.scale, y * self.scale, self.scale, self.scale))
+            
+                # fundo para espaços, pontos e power-ups
+                elif cell in (' ', '.', 'o', 'f', 't', 'v'):
+                    pg.draw.rect(self.window, self.black,
+                                 ((x * self.scale) - (self.scale / 2),
+                                  (y * self.scale) - (self.scale / 2),
+                                  self.scale * 1.5, self.scale * 1.5))
+
+        for y in range(len(self.map)):
+            for x in range(len(self.map[0])):
+                cell = self.map[y][x]
+
+               # bolinhas pequenas
+                if cell == '.':
+                    pg.draw.circle(self.window, self.white,
+                                   ((x * self.scale) + (self.scale / 4),
+                                    (y * self.scale) + (self.scale / 4)),
+                                    self.scale / 5)
+
+                # power-up normal (o)
+                elif cell == 'o':
+                    cx = (x * self.scale) + (self.scale / 4)
+                    cy = (y * self.scale) + (self.scale / 4)
+                    pw, ph = self.img_power.get_size()
+                    pos_x = int(cx - pw / 2)
+                    pos_y = int(cy - ph / 2) - 7
+                    self.window.blit(self.img_power, (pos_x, pos_y))
+
+                # freeze (f)
+                elif cell == 'f' and self.score >= self.score_freeze:
+                    cx = (x * self.scale) + (self.scale / 4)
+                    cy = (y * self.scale) + (self.scale / 4)
+                    pw, ph = self.img_freeze.get_size()
+                    pos_x = int(cx - pw / 2)
+                    pos_y = int(cy - ph / 2) 
+                    self.window.blit(self.img_freeze, (pos_x, pos_y))
+
+                # turbo (t)
+                elif cell == 't' and self.score >= self.score_turbo:
+                    cx = (x * self.scale) + (self.scale / 2)
+                    cy = (y * self.scale) + (self.scale / 2)
+                    pw, ph = self.img_turbo.get_size()
+                    pos_x = int(cx - pw / 2)
+                    pos_y = int(cy - ph / 2)
+                    self.window.blit(self.img_turbo, (pos_x, pos_y))
+
+                # vida extra (v)
+                elif cell == 'v' and self.lives < 3 :
+                    cx = (x * self.scale) + (self.scale / 4)
+                    cy = (y * self.scale) + (self.scale / 4)
+                    pw, ph = self.img_life.get_size()
+                    pos_x = int(cx - pw / 2)
+                    pos_y = int(cy - ph / 2)
+                    self.window.blit(self.img_life, (pos_x, pos_y))
+
+        # textos flutuantes
+        for text in self.floating_texts[:]:
+            text.update()
+            text.draw(self.window)
+            if text.timer <= 0:
+                self.floating_texts.remove(text)
+     
+    def animation_step(self):
+        if self.sprite_frame == 60:
+            self.sprite_frame = 0
+        else:
+            self.sprite_frame += self.sprite_speed
+
+    def player_rotation(self, image):
+        x_dir = self.pac_man_direction[0]
+        y_dir = self.pac_man_direction[1]
+        if x_dir > 0 and y_dir == 0:
+            return image
+        elif x_dir == 0 and y_dir > 0:
+            return pg.transform.rotate(image, -90)
+        elif x_dir < 0 and y_dir == 0:
+            return pg.transform.flip(image, True, False)
+        elif x_dir == 0 and y_dir < 0:
+            return pg.transform.rotate(image, 90)
+
+    def collider(self, position, direction, ignore_doors=False):
+        if self.end_game == False:
+            position[0] += direction[0]
+            position[1] += direction[1]
+            for y in range(len(self.map)):
+                for x in range(len(self.map[0])):
+                    if self.map[y][x] == '#' or (self.map[y][x] == '-' and not ignore_doors):
+                        x_wall = (x * self.scale) - (self.scale * 0.65)
+                        y_wall = (y * self.scale) - (self.scale * 0.65)
+                        wall_size = self.scale * 1.85
+                        x_agent = position[0] + (self.scale * 0.65)
+                        y_agent = position[1] + (self.scale * 0.65)
+
+
+                        if x_agent >= x_wall and x_agent <= x_wall + wall_size and y_agent >= y_wall and y_agent <= y_wall + wall_size:
+                            position[0] -= direction[0]
+                            position[1] -= direction[1]
+
+        return position
+
+    def turning_corner(self, position, direction, next_direction):
+        turned_corner = True
+        position[0] += next_direction[0] * 16
+        position[1] += next_direction[1] * 16
+        for y in range(len(self.map)):
+            for x in range(len(self.map[0])):
+                if self.map[y][x] == '#' or self.map[y][x] == '-':
+                    x_wall = (x * self.scale) - (self.scale * 0.65)
+                    y_wall = (y * self.scale) - (self.scale * 0.65)
+                    wall_size = self.scale * 1.85
+                    x_agent = position[0] + (self.scale * 0.65)
+                    y_agent = position[1] + (self.scale * 0.65)
+                    if x_agent >= x_wall and x_agent <= x_wall + wall_size and y_agent >= y_wall and y_agent <= y_wall + wall_size:
+                        turned_corner = False
+        position[0] -= next_direction[0] * 16
+        position[1] -= next_direction[1] * 16
+        if turned_corner:
+            direction[0] = next_direction[0]
+            direction[1] = next_direction[1]
+
+        return direction, next_direction
+
+    def draw_item(self, x, y, image, offset_y=-7):
+        """
+        Desenha uma imagem centralizada no tile do mapa.
+        offset_y: ajusta a posição vertical (padrão -7 para alinhar com as bolinhas grandes).
+        """
+        cx = (x * self.scale) + (self.scale / 4)  # centro horizontal
+        cy = (y * self.scale) + (self.scale / 4)  # centro vertical
+
+        pw, ph = image.get_size()
+        pos_x = int(cx - pw / 2)
+        pos_y = int(cy - ph / 2) + offset_y
+
+        self.window.blit(image, (pos_x, pos_y))
+
+    def update_pacman_speed(self):
+        # Atualiza a velocidade da direção atual com base no turbo
+        if self.pac_man_direction[0] != 0:
+            self.pac_man_direction[0] = (1 if self.pac_man_direction[0] > 0 else -1) * self.get_speed()
+        if self.pac_man_direction[1] != 0:
+            self.pac_man_direction[1] = (1 if self.pac_man_direction[1] > 0 else -1) * self.get_speed()
+
+        # Também atualiza a próxima direção se estiver definida
+        if self.pac_man_next_direction[0] != 0:
+            self.pac_man_next_direction[0] = (1 if self.pac_man_next_direction[0] > 0 else -1) * self.get_speed()
+        if self.pac_man_next_direction[1] != 0:
+            self.pac_man_next_direction[1] = (1 if self.pac_man_next_direction[1] > 0 else -1) * self.get_speed()
+
+    def collect_dots(self):
+        x_pac_man = self.pac_man_pos[0] + (self.scale * 0.65)
+        y_pac_man = self.pac_man_pos[1] + (self.scale * 0.65)
+        for y in range(len(self.map)):
+            for x in range(len(self.map[0])):
+                if self.map[y][x] == '.':
+                    x_dot = (x * self.scale) + (self.scale / 4)
+                    y_dot = (y * self.scale) + (self.scale / 4)
+                    radius = self.scale / 5
+                    if x_pac_man >= x_dot - radius and x_pac_man <= x_dot + radius and y_pac_man >= y_dot - radius and y_pac_man <= y_dot + radius:
+                        self.map[y][x] = ' '
+                        self.score += 1
+                if self.map[y][x] == 'o':
+                    x_dot = (x * self.scale) + (self.scale / 4)
+                    y_dot = (y * self.scale) + (self.scale / 4)
+                    radius = self.scale / 2
+                    if x_pac_man >= x_dot - radius and x_pac_man <= x_dot + radius and y_pac_man >= y_dot - radius and y_pac_man <= y_dot + radius:
+                        self.map[y][x] = ' '
+                        self.score += 10
+                        self.harmless_mode = True
+                        self.harmless_mode_ghost_blue   = True
+                        self.harmless_mode_ghost_orange = True
+                        self.harmless_mode_ghost_pink   = True
+                        self.harmless_mode_ghost_red    = True
+                        self.harmless_mode_boss = True
+                        self.harmless_mode_mini_ghost = True
+                        self.harmless_mode_minni_ghost = True
+                        self.harmless_mode_mmini_ghost = True
+                        #self.harmless_mode_timer = 10
+                                                
+                        # contar poções coletadas 
+                        if not hasattr(self, "player_potions"):
+                            self.player_potions = 0
+                        self.player_potions += 1
+                        print(f"Poções coletadas: {self.player_potions}")
+                if self.map[y][x] == 'v':
+                    x_dot = (x * self.scale) + (self.scale / 4)
+                    y_dot = (y * self.scale) + (self.scale / 4)
+                    radius = self.scale / 2
+
+                    # colisão com o coração
+                    if (x_pac_man >= x_dot - radius and x_pac_man <= x_dot + radius and
+                        y_pac_man >= y_dot - radius and y_pac_man <= y_dot + radius):
+
+                    # só coleta se tiver 2 vidas ou menos
+                        if self.lives <= 2:
+                            if self.lives < 5:  # limite de vidas (opcional)
+                                self.lives += 1
+                            self.map[y][x] = ' '  # remove só quando ganhou vida
+                if self.map[y][x] == 't' and self.score >= self.score_turbo:
+                    x_dot = (x * self.scale) + (self.scale / 4)
+                    y_dot = (y * self.scale) + (self.scale / 4)
+                    radius = self.scale / 2
+                    if (x_pac_man >= x_dot - radius and x_pac_man <= x_dot + radius and
+                            y_pac_man >= y_dot - radius and y_pac_man <= y_dot + radius):
+                        self.map[y][x] = ' '  # remove do mapa
+                        self.turbo_mode = True
+                        self.turbo_timer = 0
+                        self.update_pacman_speed()
+                if self.map[y][x] == 'f' and self.score >= self.score_freeze:
+                    x_dot = (x * self.scale) + (self.scale / 4)
+                    y_dot = (y * self.scale) + (self.scale / 4)
+                    radius = self.scale / 2
+
+                    if (x_pac_man >= x_dot - radius and x_pac_man <= x_dot + radius and
+                        y_pac_man >= y_dot - radius and y_pac_man <= y_dot + radius):
+
+                        self.map[y][x] = ' '  # remove do mapa
+                        self.freeze_mode = True
+                        self.freeze_timer = 0
+    
+    def reduzir_pontos_mapa(self):
+    #Remove metade das bolinhas '.' do mapa.
+        pontos = [(y, x)
+            for y in range(len(self.map))
+            for x in range(len(self.map[0]))
+            if self.map[y][x] == '.']
+
+        if not pontos:
+            return
+
+        metade = len(pontos) // 2
+        escolhidos = random.sample(pontos, metade)
+
+        for y, x in escolhidos:
+            self.map[y][x] = ' '  # apaga bolinha
+
+    def pacman_tunnel(self, position):
+        x_pos = position[0]
+        y_pos = position[1]
+        if position[0] >= self.scale * 27.5:
+            x_pos = 0 - (self.scale * 1.3)
+        elif position[0] <= -(self.scale * 1.3):
+            x_pos = self.scale * 27.5
+        return [x_pos, y_pos]
+
+    def player(self):
+        self.pac_man_direction, self.pac_man_next_direction = self.turning_corner(self.pac_man_pos, self.pac_man_direction, self.pac_man_next_direction)
+        self.pac_man_pos = self.collider(self.pac_man_pos, self.pac_man_direction)
+        self.pac_man_pos = self.pacman_tunnel(self.pac_man_pos)
+        x = self.pac_man_pos[0]
+        y = self.pac_man_pos[1]
+
+        if self.end_game:
+            if self.sprite_frame <= 5:
+                self.window.blit(self.player_rotation(self.pac_man_4), (x, y))
+            elif self.sprite_frame <= 10:
+                self.window.blit(self.player_rotation(self.pac_man_5), (x, y))
+            elif self.sprite_frame <= 15:
+                self.window.blit(self.player_rotation(self.pac_man_6), (x, y))
+            elif self.sprite_frame <= 20:
+                self.window.blit(self.player_rotation(self.pac_man_4), (x, y))
+            elif self.sprite_frame <= 25:
+                self.window.blit(self.player_rotation(self.pac_man_5), (x, y))
+            elif self.sprite_frame <= 30:
+                self.window.blit(self.player_rotation(self.pac_man_6), (x, y))
+        else:
+            if self.sprite_frame <= 6:
+                self.window.blit(self.player_rotation(self.pac_man_1), (x, y))
+            elif self.sprite_frame <= 12:
+                self.window.blit(self.player_rotation(self.pac_man_1), (x, y))
+            elif self.sprite_frame <= 18:
+                self.window.blit(self.player_rotation(self.pac_man_2), (x, y))
+            elif self.sprite_frame <= 24:
+                self.window.blit(self.player_rotation(self.pac_man_3), (x, y))
+            elif self.sprite_frame <= 48:
+                self.window.blit(self.player_rotation(self.pac_man_3), (x, y))
+            elif self.sprite_frame <= 54:
+                self.window.blit(self.player_rotation(self.pac_man_2), (x, y))
+            elif self.sprite_frame <= 60:
+                self.window.blit(self.player_rotation(self.pac_man_1), (x, y))
+        
+        if self.turbo_mode:
+            self.turbo_timer += 1
+            if self.turbo_timer >= self.turbo_duration:
+                self.turbo_mode = False
+                self.update_pacman_speed()
+        if self.freeze_mode:
+            self.freeze_timer += 1
+            if self.freeze_timer >= self.freeze_duration:
+                self.freeze_mode = False
+        if self.boss_respawn_timer > 0:
+            self.boss_respawn_timer -= 1
+            if self.boss_respawn_timer == 0:
+                # Quando o tempo acaba, solta o boss de novo
+                self.moving_ghost_into_the_game('preto')
+
+    def ghost_render(self, color, position):
+        x = position[0]
+        y = position[1]
+        if color == 'blue' and self.level != 5:
+            if self.sprite_frame <= 15:
+                self.window.blit(self.ghost_blue_down_right_0, (x, y))
+            elif self.sprite_frame <= 30:
+                self.window.blit(self.ghost_blue_down_right_1, (x, y))
+            elif self.sprite_frame <= 45:
+                self.window.blit(self.ghost_blue_down_right_0, (x, y))
+            elif self.sprite_frame <= 60:
+                self.window.blit(self.ghost_blue_down_right_1, (x, y))
+        elif color == 'orange' and self.level != 5:
+            if self.sprite_frame <= 15:
+                self.window.blit(self.ghost_orange_down_right_0, (x, y))
+            elif self.sprite_frame <= 30:
+                self.window.blit(self.ghost_orange_down_right_1, (x, y))
+            elif self.sprite_frame <= 45:
+                self.window.blit(self.ghost_orange_down_right_0, (x, y))
+            elif self.sprite_frame <= 60:
+                self.window.blit(self.ghost_orange_down_right_1, (x, y))
+        elif color == 'pink' and self.level != 5:
+            if self.sprite_frame <= 15:
+                self.window.blit(self.ghost_pink_down_right_0, (x, y))
+            elif self.sprite_frame <= 30:
+                self.window.blit(self.ghost_pink_down_right_1, (x, y))
+            elif self.sprite_frame <= 45:
+                self.window.blit(self.ghost_pink_down_right_0, (x, y))
+            elif self.sprite_frame <= 60:
+                self.window.blit(self.ghost_pink_down_right_1, (x, y))
+        elif color == 'red' and self.level != 5:
+            if self.sprite_frame <= 15:
+                self.window.blit(self.ghost_red_down_right_0, (x, y))
+            elif self.sprite_frame <= 30:
+                self.window.blit(self.ghost_red_down_right_1, (x, y))
+            elif self.sprite_frame <= 45:
+                self.window.blit(self.ghost_red_down_right_0, (x, y))
+            elif self.sprite_frame <= 60:
+                self.window.blit(self.ghost_red_down_right_1, (x, y))
+        elif color == 'harmless':
+            if self.sprite_frame <= 15:
+                self.window.blit(self.ghost_harmless_0, (x, y))
+            elif self.sprite_frame <= 30:
+                self.window.blit(self.ghost_harmless_1, (x, y))
+            elif self.sprite_frame <= 45:
+                self.window.blit(self.ghost_harmless_0, (x, y))
+            elif self.sprite_frame <= 60:
+                self.window.blit(self.ghost_harmless_1, (x, y))
+        elif color == 'preto' and self.level == 5:
+            if self.sprite_frame <= 15:
+                self.window.blit(self.boss_down_right_0, (x, y))
+            elif self.sprite_frame <= 30:
+                self.window.blit(self.boss_down_right_1, (x, y))
+            elif self.sprite_frame <= 45:
+                self.window.blit(self.boss_down_right_0, (x, y))
+            elif self.sprite_frame <= 60:
+                self.window.blit(self.boss_down_right_1, (x, y))
+        elif color == 'harmless preto':
+            if self.sprite_frame <= 15:
+                self.window.blit(self.boss_harmless_0, (x, y))
+            elif self.sprite_frame <= 30:
+                self.window.blit(self.boss_harmless_1, (x, y))
+            elif self.sprite_frame <= 45:
+                self.window.blit(self.boss_harmless_0, (x, y))
+            elif self.sprite_frame <= 60:
+                self.window.blit(self.boss_harmless_1, (x, y))
+        elif color == 'mini' and self.level == 5:
+            if self.sprite_frame <= 15:
+                self.window.blit(self.mini_ghost, (x, y))
+            elif self.sprite_frame <= 30:
+                self.window.blit(self.mini_ghost1, (x, y))
+            elif self.sprite_frame <= 45:
+                self.window.blit(self.mini_ghost, (x, y))
+            elif self.sprite_frame <= 60:
+                self.window.blit(self.mini_ghost1, (x, y))        
+        elif color == 'minni' and self.level == 5:
+            if self.sprite_frame <= 15:
+                self.window.blit(self.minni_ghost, (x, y))
+            elif self.sprite_frame <= 30:
+                self.window.blit(self.minni_ghost1, (x, y))
+            elif self.sprite_frame <= 45:
+                self.window.blit(self.minni_ghost, (x, y))
+            elif self.sprite_frame <= 60:
+                self.window.blit(self.minni_ghost1, (x, y))
+        elif color == 'mmini' and self.level == 5:
+            if self.sprite_frame <= 15:
+                self.window.blit(self.mmini_ghost, (x, y))
+            elif self.sprite_frame <= 30:
+                self.window.blit(self.mmini_ghost1, (x, y))
+            elif self.sprite_frame <= 45:
+                self.window.blit(self.mmini_ghost, (x, y))
+            elif self.sprite_frame <= 60:
+                self.window.blit(self.mmini_ghost1, (x, y))
+
+    def random_direction_for_ghost(self):
+        move_up_or_sideways = random.randint(0, 1)
+        x_direction = random.randint(0, 1)
+        y_direction = random.randint(0, 1)
+        direction = []
+        if move_up_or_sideways == 0:
+            if x_direction == 0:
+                direction = [-self.scale/16, 0]
+            else:
+                direction = [self.scale/16, 0]
+        else:
+            if y_direction == 0:
+                direction = [0, -self.scale/16]
+            else:
+                direction = [0, self.scale/16]
+
+        return direction
+
+    def random_next_direction_for_ghost(self, direction):
+        new_direction = [0, 0]
+        if direction[0] != 0:
+            if random.randint(0, 1) == 0:
+                new_direction[1] = -self.scale/16
+            else:
+                new_direction[1] = self.scale/16
+        elif direction[1] != 0:
+            if random.randint(0, 1) == 0:
+                new_direction[0] = -self.scale/16
+            else:
+                new_direction[0] = self.scale/16
+
+        return new_direction
+
+    def distance_ghost_to_pac_man(self, ghost_pos):
+        ghost_x = ghost_pos[0] + (self.scale * 0.65)
+        ghost_y = ghost_pos[1] + (self.scale * 0.65)
+        pac_man_x = self.pac_man_pos[0] + (self.scale * 0.65)
+        pac_man_y = self.pac_man_pos[1] + (self.scale * 0.65)
+        delta_x = (ghost_x - pac_man_x) ** 2
+        delta_y = (ghost_y - pac_man_y) ** 2
+        distance = (delta_x + delta_y) ** (1 / 2)
+
+        return distance
+
+    def direction_ghost_to_pac_man(self, position, direction):
+        new_direction = [0, 0]
+        ghost_x = position[0]
+        ghost_y = position[1]
+        pac_man_x = self.pac_man_pos[0]
+        pac_man_y = self.pac_man_pos[1]
+        delta_x = ghost_x - pac_man_x
+        delta_y = ghost_y - pac_man_y
+        if direction[1] != 0:
+            if delta_x <= 0:
+                new_direction[0] = self.scale/16
+            else:
+                new_direction[0] = -self.scale/16
+        if direction[0] != 0:
+            if delta_y <= 0:
+                new_direction[1] = self.scale/16
+            else:
+                new_direction[1] = -self.scale/16
+
+        return new_direction
+
+    def direction_harmless_ghost_to_pac_man(self, position, direction):
+        new_direction = [0, 0]
+        ghost_x = position[0]
+        ghost_y = position[1]
+        pac_man_x = self.pac_man_pos[0]
+        pac_man_y = self.pac_man_pos[1]
+        delta_x = ghost_x - pac_man_x
+        delta_y = ghost_y - pac_man_y
+        if direction[1] != 0:
+            if delta_x <= 0:
+                new_direction[0] = -self.scale/16
+            else:
+                new_direction[0] = self.scale/16
+        if direction[0] != 0:
+            if delta_y <= 0:
+                new_direction[1] = -self.scale/16
+            else:
+                new_direction[1] = self.scale/16
+
+        return new_direction
+
+    def new_random_direction_for_ghost(self, position, direction):
+        new_direction = [0, 0]
+        pos = [0, 0]
+        pos[0] = position[0]
+        pos[1] = position[1]
+
+        if direction[0] != 0:
+            if random.randint(0, 1) == 0:
+                new_direction[1] = -self.scale/8
+            else:
+                new_direction[1] = self.scale/8
+        elif direction[1] != 0:
+            if random.randint(0, 1) == 0:
+                new_direction[0] = -self.scale/8
+            else:
+                new_direction[0] = self.scale/8
+
+        new_position = self.collider(pos, new_direction)
+
+        if position == new_position:
+            new_direction[0] *= -1
+            new_direction[1] *= -1
+            new_position = self.collider(pos, new_direction)
+
+        new_direction[0] /= 2
+        new_direction[1] /= 2
+
+        return new_position, new_direction
+    
+    def ghost_intelligence(self, ghost_pos, ghost_direction, ghost_next_direction, distance_ghost_to_pac_man, harmless_ghost_mode):
+        ghost_blue_pos = [0, 0]
+        ghost_blue_pos[0] = ghost_pos[0]
+        ghost_blue_pos[1] = ghost_pos[1]
+        distance_ghost_to_pac_man = self.distance_ghost_to_pac_man(ghost_pos)
+        if distance_ghost_to_pac_man <= self.scale * 10:
+            if harmless_ghost_mode:
+                ghost_next_direction = self.direction_harmless_ghost_to_pac_man(ghost_pos, ghost_direction)
+            else:
+                ghost_next_direction = self.direction_ghost_to_pac_man(ghost_pos, ghost_direction)
+            ghost_direction, ghost_next_direction = self.turning_corner(ghost_pos, ghost_direction, ghost_next_direction)
+        if ghost_direction == ghost_next_direction:
+            if harmless_ghost_mode:
+                ghost_next_direction = self.direction_harmless_ghost_to_pac_man(ghost_pos, ghost_direction)
+            else:
+                ghost_next_direction = self.direction_ghost_to_pac_man(ghost_pos, ghost_direction)
+            ghost_pos = self.collider(ghost_pos, ghost_direction)
+        ghost_pos = self.pacman_tunnel(ghost_pos)
+        ghost_pos = self.collider(ghost_pos, ghost_direction)
+        if ghost_blue_pos == ghost_pos:
+            ghost_pos, ghost_direction = self.new_random_direction_for_ghost(ghost_pos, ghost_direction)
+        return ghost_pos, ghost_direction, ghost_next_direction, distance_ghost_to_pac_man
+
+    def ghost(self):
+        if self.freeze_mode:
+            self.distance_ghost_red_to_pac_man = self.distance_ghost_to_pac_man(self.ghost_red_pos)
+            self.distance_ghost_blue_to_pac_man = self.distance_ghost_to_pac_man(self.ghost_blue_pos)
+            self.distance_ghost_orange_to_pac_man = self.distance_ghost_to_pac_man(self.ghost_orange_pos)
+            self.distance_ghost_pink_to_pac_man = self.distance_ghost_to_pac_man(self.ghost_pink_pos)
+            self.distance_boss_to_pac_man = self.distance_ghost_to_pac_man(self.boss_pos)
+            self.distance_mini_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.mini_ghost_pos)
+            self.distance_minni_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.minni_ghost_pos)
+            self.distance_mmini_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.mmini_ghost_pos)
+            return  # 👈 se congelados, não se movem
+        if self.ghost_blue_pos != [self.scale * 12, self.scale * 13]:
+            input_1 = self.ghost_blue_pos
+            input_2 = self.ghost_blue_direction
+            input_3 = self.ghost_blue_next_direction
+            input_4 = self.distance_ghost_blue_to_pac_man
+            input_5 = self.harmless_mode_ghost_blue
+            output_1, output_2, output_3, output_4 = self.ghost_intelligence(input_1, input_2, input_3, input_4, input_5)
+            self.ghost_blue_pos = output_1
+            self.ghost_blue_direction = output_2
+            self.ghost_blue_next_direction = output_3
+            self.distance_ghost_blue_to_pac_man = output_4
+        if self.ghost_orange_pos != [self.scale * 12, self.scale * 14.5]:
+            input_1 = self.ghost_orange_pos
+            input_2 = self.ghost_orange_direction
+            input_3 = self.ghost_orange_next_direction
+            input_4 = self.distance_ghost_orange_to_pac_man
+            input_5 = self.harmless_mode_ghost_orange
+            output_1, output_2, output_3, output_4 = self.ghost_intelligence(input_1, input_2, input_3, input_4, input_5)
+            self.ghost_orange_pos = output_1
+            self.ghost_orange_direction = output_2
+            self.ghost_orange_next_direction = output_3
+            self.distance_ghost_orange_to_pac_man = output_4
+        if self.ghost_pink_pos != [self.scale * 14, self.scale * 13]:
+            input_1 = self.ghost_pink_pos
+            input_2 = self.ghost_pink_direction
+            input_3 = self.ghost_pink_next_direction
+            input_4 = self.distance_ghost_pink_to_pac_man
+            input_5 = self.harmless_mode_ghost_pink
+            output_1, output_2, output_3, output_4 = self.ghost_intelligence(input_1, input_2, input_3, input_4, input_5)
+            self.ghost_pink_pos = output_1
+            self.ghost_pink_direction = output_2
+            self.ghost_pink_next_direction = output_3
+            self.distance_ghost_pink_to_pac_man = output_4
+        if self.ghost_red_pos != [self.scale * 14, self.scale * 14.5]:
+            input_1 = self.ghost_red_pos
+            input_2 = self.ghost_red_direction
+            input_3 = self.ghost_red_next_direction
+            input_4 = self.distance_ghost_red_to_pac_man
+            input_5 = self.harmless_mode_ghost_red
+            output_1, output_2, output_3, output_4 = self.ghost_intelligence(input_1, input_2, input_3, input_4, input_5)
+            self.ghost_red_pos = output_1
+            self.ghost_red_direction = output_2
+            self.ghost_red_next_direction = output_3
+            self.distance_ghost_red_to_pac_man = output_4
+        if self.boss_pos != [self.scale * 13, self.scale * 14]:
+            input_1 = self.boss_pos
+            input_2 = self.boss_direction
+            input_3 = self.boss_next_direction
+            input_4 = self.distance_boss_to_pac_man
+            input_5 = self.harmless_mode_boss
+            output_1, output_2, output_3, output_4 = self.ghost_intelligence(input_1, input_2, input_3, input_4, input_5)
+            self.boss_pos = output_1
+            self.boss_direction = output_2
+            self.boss_next_direction = output_3
+            self.distance_boss_to_pac_man = output_4
+        if self.mini_ghost_pos != [self.scale * 12, self.scale * 14]:
+            input_1 = self.mini_ghost_pos
+            input_2 = self.mini_ghost_direction
+            input_3 = self.mini_ghost_next_direction
+            input_4 = self.distance_mini_ghost_to_pac_man
+            input_5 = self.harmless_mode_mini_ghost
+            output_1, output_2, output_3, output_4 = self.ghost_intelligence(input_1, input_2, input_3, input_4, input_5)
+            self.mini_ghost_pos = output_1
+            self.mini_ghost_direction = output_2
+            self.mini_ghost_next_direction = output_3
+            self.distance_mini_ghost_to_pac_man = output_4
+        if self.minni_ghost_pos != [self.scale * 14, self.scale * 12]:
+            input_1 = self.minni_ghost_pos
+            input_2 = self.minni_ghost_direction
+            input_3 = self.minni_ghost_next_direction
+            input_4 = self.distance_minni_ghost_to_pac_man
+            input_5 = self.harmless_mode_minni_ghost
+            output_1, output_2, output_3, output_4 = self.ghost_intelligence(input_1, input_2, input_3, input_4, input_5)
+            self.minni_ghost_pos = output_1
+            self.minni_ghost_direction = output_2
+            self.minni_ghost_next_direction = output_3
+            self.distance_minni_ghost_to_pac_man = output_4
+        if self.mmini_ghost_pos != [self.scale * 14, self.scale * 13]:
+            input_1 = self.mmini_ghost_pos
+            input_2 = self.mmini_ghost_direction
+            input_3 = self.mmini_ghost_next_direction
+            input_4 = self.distance_mmini_ghost_to_pac_man
+            input_5 = self.harmless_mode_mmini_ghost
+            output_1, output_2, output_3, output_4 = self.ghost_intelligence(input_1, input_2, input_3, input_4, input_5)
+            self.mmini_ghost_pos = output_1
+            self.mmini_ghost_direction = output_2
+            self.mmini_ghost_next_direction = output_3
+            self.distance_mmini_ghost_to_pac_man = output_4
+
+    def moving_ghost_into_the_game(self, color):
+        if color == 'blue':
+            self.ghost_blue_pos = [self.scale * 13.1, self.scale * 10.6]
+            self.ghost_blue_direction = self.random_direction_for_ghost()
+            self.ghost_blue_next_direction = self.random_next_direction_for_ghost(self.ghost_blue_direction)
+        elif color == 'orange':
+            self.ghost_orange_pos = [self.scale * 13.1, self.scale * 10.6]
+            self.ghost_orange_direction = self.random_direction_for_ghost()
+            self.ghost_orange_next_direction = self.random_next_direction_for_ghost(self.ghost_orange_direction)
+        elif color == 'pink':
+            self.ghost_pink_pos = [self.scale * 13.1, self.scale * 10.6]
+            self.ghost_pink_direction = self.random_direction_for_ghost()
+            self.ghost_pink_next_direction = self.random_next_direction_for_ghost(self.ghost_pink_direction)
+        elif color == 'red':
+            self.ghost_red_pos = [self.scale * 13.1, self.scale * 10.6]
+            self.ghost_red_direction = self.random_direction_for_ghost()
+            self.ghost_red_next_direction = self.random_next_direction_for_ghost(self.ghost_red_direction)
+        elif color == 'preto':
+            self.boss_pos = [self.scale * 13.1, self.scale * 10.6]
+            self.boss_direction = self.random_direction_for_ghost()
+            self.boss_next_direction = self.random_next_direction_for_ghost(self.boss_direction)
+        elif color == 'mini':
+            self.mini_ghost_pos = [self.scale * 13.1, self.scale * 10.6]
+            self.mini_ghost_direction = self.random_direction_for_ghost()
+            self.mini_ghost_next_direction = self.random_next_direction_for_ghost(self.mini_ghost_direction)
+        elif color == 'minni':
+            self.minni_ghost_pos = [self.scale * 13.1, self.scale * 10.6]
+            self.minni_ghost_direction = self.random_direction_for_ghost()
+            self.minni_ghost_next_direction = self.random_next_direction_for_ghost(self.minni_ghost_direction)
+        elif color == 'mmini':
+            self.mmini_ghost_pos = [self.scale * 13.1, self.scale * 10.6]
+            self.mmini_ghost_direction = self.random_direction_for_ghost()
+            self.mmini_ghost_next_direction = self.random_next_direction_for_ghost(self.mmini_ghost_direction)
+
+    def ghost_manager(self):
+        if self.harmless_mode:
+            if self.sprite_frame == 60:
+                self.harmless_mode_timer += 1
+            if self.harmless_mode_timer == 16:
+                self.harmless_mode = False
+                self.harmless_mode_ghost_blue   = False
+                self.harmless_mode_ghost_orange = False
+                self.harmless_mode_ghost_pink   = False
+                self.harmless_mode_ghost_red    = False
+                self.harmless_mode_boss = False
+                self.harmless_mode_mini_ghost = False
+                self.harmless_mode_minni_ghost = False
+                self.harmless_mode_mmini_ghost = False
+                self.harmless_mode_timer = 0
+        if self.harmless_mode_ghost_blue:
+            self.ghost_render('harmless', self.ghost_blue_pos)
+        else:
+            self.ghost_render('blue',   self.ghost_blue_pos)
+        if self.harmless_mode_ghost_orange:
+            self.ghost_render('harmless', self.ghost_orange_pos)
+        else:
+            self.ghost_render('orange', self.ghost_orange_pos)
+        if self.harmless_mode_ghost_pink:
+            self.ghost_render('harmless', self.ghost_pink_pos)
+        else:
+            self.ghost_render('pink',   self.ghost_pink_pos)
+        if self.harmless_mode_ghost_red:
+            self.ghost_render('harmless', self.ghost_red_pos)
+        else:
+            self.ghost_render('red',    self.ghost_red_pos)
+        if self.harmless_mode_boss:
+            self.ghost_render('harmless preto', self.boss_pos)
+        else: 
+            self.ghost_render('preto', self.boss_pos)        
+        if self.harmless_mode_mini_ghost:
+            self.ghost_render('harmless preto', self.mini_ghost_pos)
+        else: 
+            self.ghost_render('mini', self.mini_ghost_pos)        
+        if self.harmless_mode_minni_ghost:
+            self.ghost_render('harmless preto', self.minni_ghost_pos)
+        else: 
+            self.ghost_render('minni', self.minni_ghost_pos)      
+        if self.harmless_mode_mmini_ghost:
+            self.ghost_render('harmless preto', self.mmini_ghost_pos)
+        else: 
+            self.ghost_render('mmini', self.mmini_ghost_pos)
+
+        if self.sprite_frame == 60:
+            if self.level != 5:
+                if self.ghost_blue_pos == [self.scale * 12, self.scale * 13]:
+                    self.moving_ghost_into_the_game('blue')
+                elif self.ghost_orange_pos == [self.scale * 12, self.scale * 14.5]:
+                    self.moving_ghost_into_the_game('orange')
+                elif self.ghost_pink_pos == [self.scale * 14, self.scale * 13]:
+                    self.moving_ghost_into_the_game('pink')
+                elif self.ghost_red_pos == [self.scale * 14, self.scale * 14.5]:
+                    self.moving_ghost_into_the_game('red')
+                    self.boss_pos   = [-999, -999]
+                    self.mini_ghost_pos = [-999, -999]
+                    self.minni_ghost_pos = [-999, -999]
+                    self.mmini_ghost_pos = [-999, -999]
+            elif self.level == 5:
+                if self.boss_pos == [self.scale * 13, self.scale * 14]:
+                    self.moving_ghost_into_the_game('preto')
+                elif self.mini_ghost_pos == [self.scale * 12, self.scale * 14]:
+                    self.moving_ghost_into_the_game('mini')                    
+                elif self.minni_ghost_pos == [self.scale * 14, self.scale * 12]:
+                    self.moving_ghost_into_the_game('minni')
+                elif self.mmini_ghost_pos == [self.scale * 14, self.scale * 13]:
+                    self.moving_ghost_into_the_game('mmini')
+                    # fantasmas para fora da tela 
+                    self.ghost_blue_pos   = [-999, -999]
+                    self.ghost_orange_pos = [-999, -999]
+                    self.ghost_pink_pos   = [-999, -999]
+                    self.ghost_red_pos    = [-999, -999]
+
+    def ghost_and_pacman_collider(self):
+        if self.distance_ghost_blue_to_pac_man <= (self.scale * 1.1):
+            if self.harmless_mode_ghost_blue:
+                self.ghost_blue_pos = [self.scale * 12, self.scale * 13]
+                self.harmless_mode_ghost_blue = False
+                self.distance_ghost_blue_to_pac_man = self.distance_ghost_to_pac_man(self.ghost_blue_pos)
+                self.score += 20
+                self.floating_texts.append(
+                    FloatingText("+20", int(self.pac_man_pos[0]), int(self.pac_man_pos[1]), self.font))
+            else:
+                if self.end_game == False:
+                    self.sprite_frame = 0
+                    self.sprite_speed = 1
+                    self.lives -= 1
+                self.end_game = True
+                if self.freeze_mode:         # 👈 se estava congelado, cancela
+                    self.freeze_mode = False
+                    self.freeze_timer = 0
+        elif self.distance_ghost_orange_to_pac_man <= (self.scale * 1.1):
+            if self.harmless_mode_ghost_orange:
+                self.ghost_orange_pos = [self.scale * 12, self.scale * 14.5]
+                self.harmless_mode_ghost_orange = False
+                self.distance_ghost_orange_to_pac_man = self.distance_ghost_to_pac_man(self.ghost_orange_pos)
+                self.score += 30
+                self.floating_texts.append(
+                    FloatingText("+30", int(self.pac_man_pos[0]), int(self.pac_man_pos[1]), self.font))
+            else:
+                if self.end_game == False:
+                    self.sprite_frame = 0
+                    self.sprite_speed = 1
+                    self.lives -= 1
+                self.end_game = True                
+                if self.freeze_mode:         # 👈 se estava congelado, cancela
+                    self.freeze_mode = False
+                    self.freeze_timer = 0
+        elif self.distance_ghost_pink_to_pac_man <= (self.scale * 1.1):
+            if self.harmless_mode_ghost_pink:
+                self.ghost_pink_pos = [self.scale * 14, self.scale * 13]
+                self.harmless_mode_ghost_pink = False
+                self.distance_ghost_pink_to_pac_man = self.distance_ghost_to_pac_man(self.ghost_pink_pos)
+                self.score += 40
+                self.floating_texts.append(
+                    FloatingText("+40", int(self.pac_man_pos[0]), int(self.pac_man_pos[1]), self.font))
+            else:
+                if self.end_game == False:
+                    self.sprite_frame = 0
+                    self.sprite_speed = 1
+                    self.lives -= 1
+                self.end_game = True                
+                if self.freeze_mode:         # 👈 se estava congelado, cancela
+                    self.freeze_mode = False
+                    self.freeze_timer = 0
+        elif self.distance_ghost_red_to_pac_man <= (self.scale * 1.1):
+            if self.harmless_mode_ghost_red:
+                self.ghost_red_pos = [self.scale * 14, self.scale * 14.5]
+                self.harmless_mode_ghost_red = False
+                self.distance_ghost_red_to_pac_man = self.distance_ghost_to_pac_man(self.ghost_red_pos)
+                self.score += 50
+                self.floating_texts.append(
+                    FloatingText("+50", int(self.pac_man_pos[0]), int(self.pac_man_pos[1]), self.font))
+            else:
+                if self.end_game == False:
+                    self.sprite_frame = 0
+                    self.sprite_speed = 1
+                    self.lives -= 1
+                self.end_game = True                
+                if self.freeze_mode:         # 👈 se estava congelado, cancela
+                    self.freeze_mode = False
+                    self.freeze_timer = 0            
+        elif self.distance_boss_to_pac_man <= (self.scale * 1.1):
+            if self.harmless_mode_boss:
+                self.boss_pos = [self.scale * 13, self.scale * 14]
+                self.harmless_mode_boss = False
+                self.distance_boss_to_pac_man = self.distance_ghost_to_pac_man(self.boss_pos)
+                self.score += 50
+                self.floating_texts.append(
+                    FloatingText("70", int(self.pac_man_pos[0]), int(self.pac_man_pos[1]), self.font))
+            else:
+                if self.end_game == False:
+                    self.sprite_frame = 0
+                    self.sprite_speed = 1
+                    self.lives -= 1
+                self.end_game = True                
+                if self.freeze_mode:         # 👈 se estava congelado, cancela
+                    self.freeze_mode = False
+                    self.freeze_timer = 0
+        elif self.distance_mini_ghost_to_pac_man <= (self.scale * 1.1):
+            if self.harmless_mode_mini_ghost:
+                self.mini_ghost_pos = [self.scale * 13, self.scale * 12]
+                self.harmless_mode_mini_ghost = False
+                self.distance_mini_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.mini_ghost_pos)
+                self.score += 50
+                self.floating_texts.append(
+                    FloatingText("+35", int(self.pac_man_pos[0]), int(self.pac_man_pos[1]), self.font))
+            else:
+                if self.end_game == False:
+                    self.sprite_frame = 0
+                    self.sprite_speed = 1
+                    self.lives -= 1
+                self.end_game = True                
+                if self.freeze_mode:         # 👈 se estava congelado, cancela
+                    self.freeze_mode = False
+                    self.freeze_timer = 0
+        elif self.distance_minni_ghost_to_pac_man <= (self.scale * 1.1):
+            if self.harmless_mode_minni_ghost:
+                self.minni_ghost_pos = [self.scale * 13, self.scale * 12]
+                self.harmless_mode_minni_ghost = False
+                self.distance_minni_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.minni_ghost_pos)
+                self.score += 50
+                self.floating_texts.append(
+                    FloatingText("+35", int(self.pac_man_pos[0]), int(self.pac_man_pos[1]), self.font))
+            else:
+                if self.end_game == False:
+                    self.sprite_frame = 0
+                    self.sprite_speed = 1
+                    self.lives -= 1
+                self.end_game = True                
+                if self.freeze_mode:         # 👈 se estava congelado, cancela
+                    self.freeze_mode = False
+                    self.freeze_timer = 0
+        elif self.distance_mmini_ghost_to_pac_man <= (self.scale * 1.1):
+            if self.harmless_mode_mmini_ghost:
+                self.mmini_ghost_pos = [self.scale * 13, self.scale * 12]
+                self.harmless_mode_mmini_ghost = False
+                self.distance_mmini_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.mmini_ghost_pos)
+                self.score += 50
+                self.floating_texts.append(
+                    FloatingText("+35", int(self.pac_man_pos[0]), int(self.pac_man_pos[1]), self.font))
+            else:
+                if self.end_game == False:
+                    self.sprite_frame = 0
+                    self.sprite_speed = 1
+                    self.lives -= 1
+                self.end_game = True                
+                if self.freeze_mode:         # 👈 se estava congelado, cancela
+                    self.freeze_mode = False
+                    self.freeze_timer = 0
+
+    def reset_game(self):
+        self.level = 1
+        self.score = 0
+        self.lives = 5
+        self.map  = [linha[:] for linha in self.map_original]
+        self.map2 = [linha[:] for linha in self.map2_original]
+        self.map3 = [linha[:] for linha in self.map3_original]
+        self.map4 = [linha[:] for linha in self.map4_original]
+        self.map5 = [linha[:] for linha in self.map5_original]
+
+    def restart(self):
+        self.sprite_frame = 0
+        self.sprite_speed = 2
+        self.score = 0
+        self.lives = 5
+        self.end_game = False
+        self.harmless_mode = False
+        self.harmless_mode_timer = 0
+        self.harmless_mode_ghost_blue   = False
+        self.harmless_mode_ghost_orange = False
+        self.harmless_mode_ghost_pink   = False
+        self.harmless_mode_ghost_red    = False
+        self.harmless_mode_boss = False
+        self.harmless_mode_mini_ghost = False
+        self.harmless_mode_minni_ghost = False
+        self.harmless_mode_mmini_ghost = False
+
+        # importante 
+        self.fase_atual = 1
+        self.venceu_todas_as_fases 
+
+        self.pac_man_pos            = [self.scale * 13.1, self.scale * 22.6]
+        self.pac_man_direction      = [self.scale/16, 0]
+        self.pac_man_next_direction = [self.scale/16, 0]
+        self.ghost_blue_pos   = [self.scale * 12, self.scale * 13]
+        self.ghost_orange_pos = [self.scale * 12, self.scale * 14.5]
+        self.ghost_pink_pos   = [self.scale * 14, self.scale * 13]
+        self.ghost_red_pos    = [self.scale * 14, self.scale * 14.5]
+        self.boss_pos = [self.scale * 13, self.scale * 14]
+        self.mini_ghost_pos = [self.scale * 12, self.scale * 14]
+        self.minni_ghost_pos = [self.scale * 14, self.scale * 12]
+        self.mmini_ghost_pos = [self.scale * 14, self.scale * 13]
+        self.ghost_blue_direction   = [0, 0]
+        self.ghost_orange_direction = [0, 0]
+        self.ghost_pink_direction   = [0, 0]
+        self.ghost_red_direction    = [0, 0]
+        self.boss_direction = [0, 0]
+        self.mini_ghost_direction = [0, 0]
+        self.minni_ghost_direction = [0, 0]
+        self.mmini_ghost_direction = [0, 0]
+        self.ghost_blue_next_direction   = [0, 0]
+        self.ghost_orange_next_direction = [0, 0]
+        self.ghost_pink_next_direction   = [0, 0]
+        self.ghost_red_next_direction    = [0, 0]
+        self.boss_next_direction = [0, 0]
+        self.mini_ghost_next_direction = [0, 0]
+        self.minni_ghost_next_direction = [0, 0]
+        self.mmini_ghost_next_direction = [0, 0]
+        self.distance_ghost_blue_to_pac_man   = self.distance_ghost_to_pac_man(self.ghost_blue_pos)
+        self.distance_ghost_orange_to_pac_man = self.distance_ghost_to_pac_man(self.ghost_orange_pos)
+        self.distance_ghost_pink_to_pac_man   = self.distance_ghost_to_pac_man(self.ghost_pink_pos)
+        self.distance_ghost_red_to_pac_man    = self.distance_ghost_to_pac_man(self.ghost_red_pos)
+        self.distance_boss_to_pac_man = self.distance_ghost_to_pac_man(self.boss_pos)
+        self.distance_mini_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.mini_ghost_pos)
+        self.distance_minni_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.minni_ghost_pos)
+        self.distance_mmini_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.mmini_ghost_pos)
+
+        if self.fase_atual == 1:
+            self.map_atual = self.map    # mapa da fase 1
+        elif self.fase_atual == 2:
+            self.map_atual = self.map2   # mapa da fase 2
+        elif self.fase_atual == 3:
+            self.map_atual = self.map3   # mapa da fase 3
+        elif self.fase_atual == 4:
+            self.map_atual = self.map4
+        elif self.fase_atual == 5:
+            self.map_atual = self.map5
+
+    def restart_ghost_collision(self):
+        if self.sprite_frame == 60 and self.end_game == True and self.lives > 0:
+            self.end_game = False
+            self.harmless_mode = False
+            self.harmless_mode_timer = 0
+            self.harmless_mode_ghost_blue   = False
+            self.harmless_mode_ghost_orange = False
+            self.harmless_mode_ghost_pink   = False
+            self.harmless_mode_ghost_red    = False
+            self.harmless_mode_boss = False
+            self.harmless_mode_mini_ghost = False
+            self.harmless_mode_minni_ghost = False
+            self.harmless_mode_mmini_ghost = False
+            self.pac_man_pos            = [self.scale * 13.1, self.scale * 22.6]
+            self.pac_man_direction      = [self.scale/16, 0]
+            self.pac_man_next_direction = [self.scale/16, 0]
+            self.ghost_blue_pos   = [self.scale * 12, self.scale * 13]
+            self.ghost_orange_pos = [self.scale * 12, self.scale * 14.5]
+            self.ghost_pink_pos   = [self.scale * 14, self.scale * 13]
+            self.ghost_red_pos    = [self.scale * 14, self.scale * 14.5]
+            self.boss_pos = [self.scale * 13, self.scale * 14]
+            self.mini_ghost_pos = [self.scale * 12, self.scale * 14]
+            self.minni_ghost_pos = [self.scale * 14, self.scale * 12]
+            self.mmini_ghost_pos = [self.scale * 14, self.scale * 13]
+            self.distance_ghost_blue_to_pac_man   = self.distance_ghost_to_pac_man(self.ghost_blue_pos)
+            self.distance_ghost_orange_to_pac_man = self.distance_ghost_to_pac_man(self.ghost_orange_pos)
+            self.distance_ghost_pink_to_pac_man   = self.distance_ghost_to_pac_man(self.ghost_pink_pos)
+            self.distance_ghost_red_to_pac_man    = self.distance_ghost_to_pac_man(self.ghost_red_pos)
+            self.distance_boss_to_pac_man = self.distance_ghost_to_pac_man(self.boss_pos)
+            self.distance_mini_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.mini_ghost_pos)
+            self.distance_minni_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.minni_ghost_pos)
+            self.distance_mmini_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.mmini_ghost_pos)
+            self.sprite_speed = 2
+            self.end_game = False
+
+    def colect_all_dots(self):
+        count = 0
+        for y in range(len(self.map)):
+            for x in range(len(self.map[0])):
+                if self.map[y][x] == '.' or self.map[y][x] == 'o':
+                    count += 1
+        if count == 0:
+            self.end_game = False
+            self.harmless_mode = False
+            self.harmless_mode_timer = 0
+            self.harmless_mode_ghost_blue   = False
+            self.harmless_mode_ghost_orange = False
+            self.harmless_mode_ghost_pink   = False
+            self.harmless_mode_ghost_red    = False
+            self.harmless_mode_boss = False
+            self.harmless_mode_mini_ghost = False
+            self.harmless_mode_minni_ghost = False
+            self.harmless_mode_mmini_ghost = False
+            self.pac_man_pos            = [self.scale * 13.1, self.scale * 22.6]
+            self.pac_man_direction      = [self.scale/16, 0]
+            self.pac_man_next_direction = [self.scale/16, 0]
+            self.ghost_blue_pos   = [self.scale * 12, self.scale * 13]
+            self.ghost_orange_pos = [self.scale * 12, self.scale * 14.5]
+            self.ghost_pink_pos   = [self.scale * 14, self.scale * 13]
+            self.ghost_red_pos    = [self.scale * 14, self.scale * 14.5]
+            self.boss_pos = [self.scale * 12, self.scale * 13]
+            self.mini_ghost_pos = [self.scale * 12, self.scale * 14.5]
+            self.minni_ghost_pos = [self.scale * 14, self.scale * 13]
+            self.mmini_ghost_pos = [self.scale * 14, self.scale * 14.5]
+            self.distance_ghost_blue_to_pac_man   = self.distance_ghost_to_pac_man(self.ghost_blue_pos)
+            self.distance_ghost_orange_to_pac_man = self.distance_ghost_to_pac_man(self.ghost_orange_pos)
+            self.distance_ghost_pink_to_pac_man   = self.distance_ghost_to_pac_man(self.ghost_pink_pos)
+            self.distance_ghost_red_to_pac_man    = self.distance_ghost_to_pac_man(self.ghost_red_pos)
+            self.distance_boss_to_pac_man = self.distance_ghost_to_pac_man(self.boss_pos)
+            self.distance_mini_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.mini_ghost_pos)
+            self.distance_minni_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.minni_ghost_pos)
+            self.distance_mmini_ghost_to_pac_man = self.distance_ghost_to_pac_man(self.mmini_ghost_pos)
+            self.sprite_speed = 2
+            
+        if not any('.' in row or 'o' in row for row in self.map):
+            # terminou a fase
+            if self.level == 1:
+                self.map = self.map2
+                tela_transic(2)
+                self.level = 2
+            elif self.level == 2:
+                self.map = self.map3
+                tela_transic(3)
+                self.level = 3
+            elif self.level == 3:
+                self.map = self.map4
+                tela_transic(4)
+                self.level = 4
+            elif self.level == 4:
+                self.map = self.map5
+                tela_transic(5)
+                self.level = 5
+                self.ghosts = []  # limpa lista de fantasmas
+                self.ghost_blue_pos = None
+                self.ghost_orange_pos = None
+                self.ghost_pink_pos = None
+                self.ghost_red_pos = None
+                self.end_game = False
+            elif self.level == 5:
+                tela_final(self.score, self.selected_character, vitoria=True)
+                
+    def scoreboard(self):
+        max_vidas = 5
+
+        # Posição inicial (canto superior direito)
+        x_base = len(self.map[0]) * self.scale + self.scale
+        y_base = self.scale
+
+        # Carregar a imagem do coração
+        coracao_img = pg.image.load('img/coracao.png')  # coloque seu coração
+        coracao_img = pg.transform.scale(coracao_img, (self.scale * 2, self.scale * 2))
+
+        # Desenha um coração para cada vida restante
+        for i in range(self.lives):
+            y = y_base + (coracao_img.get_height() + 5) * i  # 5px de espaço entre corações
+            self.window.blit(coracao_img, (x_base, y))
+
+        coracao_vazio = pg.image.load('img/coracao_vazio.png')  # imagem cinza/transparente
+        coracao_vazio = pg.transform.scale(coracao_vazio, (self.scale * 2, self.scale * 2))
+        for i in range(self.lives, max_vidas):
+            y = y_base + (coracao_vazio.get_height() + 5) * i
+            self.window.blit(coracao_vazio, (x_base, y))
+
+        # Calcula posição da pontuação (logo abaixo dos corações)
+        altura_total = (coracao_img.get_height() + 5) * max_vidas
+        y_pontuacao = y_base + altura_total + 10  # 10px de espaço abaixo dos corações
+
+        # Renderiza e desenha a pontuação
+        texto_pontuacao = self.font.render(f"Score: {self.score}", True, (255, 255, 255))
+        self.window.blit(texto_pontuacao, (x_base, y_pontuacao))
+
+        # Fonte menor para instruções
+        instrucoes_font = pg.font.SysFont("Courier New", int(self.scale * 0.6), bold=True)
+
+        texto_instrucao_esc = instrucoes_font.render("ESC: Sair do jogo", True, (255, 255, 255))
+        texto_instrucao_r = instrucoes_font.render("R: Voltar ao inicio", True, (255, 255, 255))
+        texto_instrucao_pause = instrucoes_font.render("P: Pausa o jogo", True, (255, 255, 255))
+        texto_instrucao_ajuda = instrucoes_font.render("H: Tela de ajuda", True, (255, 255, 255))
+
+        # Posição no canto inferior (direito)
+        margem = 10
+        y_instrucao_r = self.window.get_height() - texto_instrucao_r.get_height() - margem
+        y_instrucao_esc = y_instrucao_r - texto_instrucao_esc.get_height() - 5
+        y_instrucao_pause = y_instrucao_esc - texto_instrucao_pause.get_height() - 5
+        y_instrucao_ajuda = y_instrucao_pause - texto_instrucao_ajuda.get_height() - 5
+        x_pos = self.window.get_width() - max(texto_instrucao_r.get_width(), texto_instrucao_esc.get_width(), texto_instrucao_pause.get_width(), texto_instrucao_ajuda.get_width()) - margem
+
+        self.window.blit(texto_instrucao_esc, (x_pos, y_instrucao_esc))
+        self.window.blit(texto_instrucao_r, (x_pos, y_instrucao_r))
+        self.window.blit(texto_instrucao_pause, (x_pos, y_instrucao_pause))
+        self.window.blit(texto_instrucao_ajuda, (x_pos, y_instrucao_ajuda))
+
+# ajuste fino do analógico
+DEADZONE = 0.30
+
+while True:  # Loop principal (menu -> jogo -> menu)
+    selecao = tela_inicial()
+    jogo = PacMan(26, selecao)
+    paused = False
+
+    # --- Inicializar joystick ---
+    pg.joystick.init()
+    joystick = None
+    if pg.joystick.get_count() > 0:
+        joystick = pg.joystick.Joystick(0)
+        joystick.init()
+        print('HATs:', joystick.get_numhats(), 'Axes:', joystick.get_numaxes(), 'Buttons:', joystick.get_numbuttons())
+        print("Joystick conectado:", joystick.get_name())
+    else:
+        print("Nenhum joystick encontrado")
+
+    sair_para_menu = False
+    clock = pg.time.Clock()
+
+    while True:  # Loop da partida
+        # ====== EVENTOS ======
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                quit()
+
+            # --- Teclado ---
+            if event.type == pg.KEYDOWN:
+                tecla = pg.key.name(event.key)
+                if tecla == 'escape':
+                    pg.quit()
+                    quit()
+                elif tecla == 'r':
+                    sair_para_menu = True
+                elif event.key == pg.K_h:  # tecla H abre ajuda
+                    tela_escolha_controle()
+                elif event.key == pg.K_m:  # tecla M -> pular fase
+                    jogo.level += 1
+                    print(f"Pulou para a fase {jogo.level}")
+                    tela_transic(jogo.level)
+                    if jogo.level == 2:
+                        jogo.map = jogo.map2
+                    elif jogo.level == 3:
+                        jogo.map = jogo.map3
+                    elif jogo.level == 4:
+                        jogo.map = jogo.map4
+                    elif jogo.level == 5:
+                        jogo.map = jogo.map5
+                elif event.key == pg.K_l:  # tecla L -> dividir pontos
+                    jogo.reduzir_pontos_mapa()
+                
+                else:
+                    jogo.move(tecla)  # aceita 'w','a','s','d' e 'up','down','left','right'
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_p:  # Tecla P para pausar
+                        paused = not paused
+
+            # --- Joystick: D-Pad (HAT) ---
+            if event.type == pg.JOYHATMOTION and joystick is not None:
+                hat_x, hat_y = event.value  # tuple (x, y)
+                # eixo X do HAT
+                if hat_x == -1:
+                    jogo.move('left')
+                elif hat_x == 1:
+                    jogo.move('right')
+                # eixo Y do HAT (OBS: up = +1, down = -1)
+                if hat_y == 1:
+                    jogo.move('up')
+                elif hat_y == -1:
+                    jogo.move('down')
+
+            # --- Joystick: Analógico (opcional) ---
+            if event.type == pg.JOYAXISMOTION and joystick is not None:
+                if event.axis == 0:  # X
+                    if event.value < -DEADZONE:
+                        jogo.move('left')
+                    elif event.value > DEADZONE:
+                        jogo.move('right')
+                elif event.axis == 1:  # Y
+                    if event.value < -DEADZONE:
+                        jogo.move('up')
+                    elif event.value > DEADZONE:
+                        jogo.move('down')
+
+            # --- Joystick: Botões ---
+            if event.type == pg.JOYBUTTONDOWN and joystick is not None:
+                if event.button == 0:   # Botão A -> Enter
+                    pg.event.post(pg.event.Event(pg.KEYDOWN, key=pg.K_RETURN))
+                    pg.event.post(pg.event.Event(pg.KEYUP,   key=pg.K_RETURN))
+                elif event.button == 2: # Botão X -> sair para menu
+                    sair_para_menu = True
+                elif event.button == 1: # Botão B -> ajuda (tecla 'h')
+                    tela_escolha_controle()
+                elif event.button == 3: # Botão Y -> pausar (tecla 'p')
+                    paused = not paused
+                elif event.button == 6: # Botão Select -> sair do jogo (ESC)
+                    pg.quit()
+                    quit()
+
+        # ====== POLL POR FRAME (garante que o D-Pad funcione mesmo sem evento contínuo) ======
+        if joystick is not None:
+            # 1) HAT (D-Pad) tem prioridade
+            if joystick.get_numhats() > 0:
+                hat_x, hat_y = joystick.get_hat(0)
+                if hat_x != 0 or hat_y != 0:
+                    if hat_x == -1: jogo.move('left')
+                    elif hat_x == 1: jogo.move('right')
+                    if hat_y == 1: jogo.move('up')
+                    elif hat_y == -1: jogo.move('down')
+            # 2) Analógicos (se existirem)
+            if joystick.get_numaxes() >= 2:
+                x_axis = joystick.get_axis(0)
+                y_axis = joystick.get_axis(1)
+                if abs(x_axis) > DEADZONE:
+                    jogo.move('left' if x_axis < 0 else 'right')
+                if abs(y_axis) > DEADZONE:
+                    jogo.move('up' if y_axis < 0 else 'down')
+
+#continuar aqui
+        # sair da partida
+        if getattr(jogo, "back_to_menu", False) or sair_para_menu:
+            # decide qual tela mostrar
+            continuar_jogando = False
+            if jogo.finished_type == 'vitoria': #victory
+                continuar_jogando = tela_final(jogo.score, jogo.selected_character, vitoria=True)   
+            elif jogo.finished_type == 'game_over':
+                continuar_jogando = tela_final(jogo.score, jogo.selected_character, vitoria=False) 
+
+            if continuar_jogando:
+                # jogador escolheu reiniciar, então criamos um novo objeto de jogo
+                jogo = PacMan(scale=20, selected_character=selecao) # Aqui você chama novamente a função de criação do jogo
+                continue # E continua o loop
+
+            else:
+                # jogador escolheu voltar ao menu
+                break # Sai do loop do jogo
+        
+        clock.tick(60)
+
+        if paused:
+            font = pg.font.SysFont("Courier New", 50, bold=True)
+            pause_text = font.render("PAUSADO", True, (255, 255, 0))
+            jogo.window.blit(pause_text, pause_text.get_rect(center=(jogo.window.get_width()//2, jogo.window.get_height()//2)))
+
+            instr = pg.font.SysFont("Courier New", 25, bold=True).render("Pressione P para continuar", True, (200, 200, 200))
+            jogo.window.blit(instr, instr.get_rect(center=(jogo.window.get_width()//2, jogo.window.get_height()//2 + 60)))
+
+            pg.display.update()
+            continue  # Pula o resto do loop enquanto pausado
+
+        # Game logic
+        jogo.clock.tick(60)
+        jogo.clear_window()
+        jogo.board()
+        jogo.animation_step()
+        jogo.player()  # SEMPRE roda, mesmo na fase 5
+        jogo.ghost()
+        jogo.collect_dots()
+        jogo.ghost_manager()
+        jogo.ghost_and_pacman_collider()
+        jogo.scoreboard()
+        jogo.restart_ghost_collision()
+        jogo.colect_all_dots()
+        pg.display.update()
+
+        if jogo.lives <= 0:
+            novo_jogo = tela_final(jogo.score, jogo.selected_character, vitoria=False)
+            if novo_jogo:                           # se o jogador escolheu reiniciar
+                jogo = novo_jogo
+            #tela_game_over(jogo.score)   # mostra tela
+            #jogo.restart() 
+
+        pg.display.update()
