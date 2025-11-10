@@ -15,7 +15,6 @@ Você pode escolher entre **4 personagens jogáveis**, enfrentar **5 fases únic
 O jogo foi desenvolvido com base no código do [Leonardo Nunes Armelin](https://github.com/Leonardo-Nunes-Armelim/Bytes_Universe/commit/a443a2682d710d4d9b626cc7113ebba58fa2ac74).
 
 ---
-
 ## 🕹️ Jogabilidade
 
 O jogo conta com:
@@ -27,7 +26,6 @@ O jogo conta com:
 Na tela de ajuda, você pode escolher entre teclado ou joystick — os comandos exibidos mudam conforme sua escolha.
 
 ---
-
 ## ❤️ Sistema de Vidas e Itens
 
 - O jogador começa com **5 vidas**  
@@ -40,7 +38,6 @@ Na tela de ajuda, você pode escolher entre teclado ou joystick — os comandos 
 Cada tipo de fantasma concede uma **pontuação diferente**!
 
 ---
-
 ## 🧩 Recursos do jogo
 
 - Estilo retrô com design atualizado  
@@ -48,7 +45,6 @@ Cada tipo de fantasma concede uma **pontuação diferente**!
 - Fases progressivas com aumento de dificuldade  
 
 ---
-
 ## 📸 Capturas de Tela
 
 > *(Adicione aqui imagens ou GIFs do gameplay, se quiser)*  
@@ -58,7 +54,33 @@ Cada tipo de fantasma concede uma **pontuação diferente**!
 > ```
 
 ---
+## ⚙️ Instalação e Execução do Jogo
 
+Siga estes passos para instalar e executar **GHOST GRIND** localmente.
+---
+### 🧰 Pré-requisitos
+
+Antes de jogar, você precisa ter instalado:
+
+- [Python 3.10+](https://www.python.org/downloads/)
+- [Git](https://git-scm.com/)
+- Biblioteca **Pygame**
+
+Verifique se o Python está instalado corretamente executando no terminal:
+
+```bash
+python --version
+deve parecer algo como Python 3.10.12
+
+### 2) Clonar o repositório
+No terminal, execute:
+```bash
+git clone https://github.com/seuusuario/ghost-grind.git
+cd ghost-grind
+
+### 2) Crie um ambiente virtual
+
+---
 ## 👨‍💻 Autores
 
 **Desenvolvimento:**  
@@ -103,7 +125,6 @@ Cada tipo de fantasma concede uma **pontuação diferente**!
 - [Leonardo Nunes Armelin](https://github.com/Leonardo-Nunes-Armelim)
 
 ---
-
 ## 🧾 Licença
 
 Este projeto é de uso educacional e não comercial.  
