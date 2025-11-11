@@ -54,33 +54,6 @@ Cada tipo de fantasma concede uma **pontuação diferente**!
 > ```
 
 ---
-## ⚙️ Instalação e Execução do Jogo
-
-Siga estes passos para instalar e executar **GHOST GRIND** localmente.
----
-### 🧰 Pré-requisitos
-
-Antes de jogar, você precisa ter instalado:
-
-- [Python 3.10+](https://www.python.org/downloads/)
-- [Git](https://git-scm.com/)
-- Biblioteca **Pygame**
-
-Verifique se o Python está instalado corretamente executando no terminal:
-
-```bash
-python --version
-deve parecer algo como Python 3.10.12
-
-### 2) Clonar o repositório
-No terminal, execute:
-```bash
-git clone https://github.com/seuusuario/ghost-grind.git
-cd ghost-grind
-
-### 2) Crie um ambiente virtual
-
----
 ## 👨‍💻 Autores
 
 **Desenvolvimento:**  
@@ -136,3 +109,48 @@ O código original pertence a seus respectivos autores.
   ⭐ Se gostou do projeto, não esqueça de dar um <b>Star</b> no repositório!
 </p>
 
+---
+## ⚙️ Instalação e Execução do Jogo
+
+Siga estes passos para instalar e executar **GHOST GRIND** localmente.
+
+---
+### 🧰 Pré-requisitos
+
+Antes de jogar, você precisa ter instalado:
+
+- [Visual Studio Code (VS Code)](https://code.visualstudio.com/)
+- [Python 3.10+](https://www.python.org/downloads/)
+- [Git](https://git-scm.com/)
+- Biblioteca **Pygame**
+
+Verifique se o Python está instalado corretamente, abra o terminal e digite: 
+
+bash
+python --version
+
+> Deve parecer algo como Python 3.10.12
+
+### 1) Clonar o repositório
+No terminal, execute:
+```bash
+git clone https://github.com/seuusuario/ghost-grind.git
+cd ghost-grind
+
+> Caso prefira, você também pode baixar o repositório em formato ZIP e extrair os arquivos em uma pasta do seu notebook.
+
+### 2) Crie um ambiente virtual
+Certifique-se de que o Python está instalado corretamente.
+Depois, crie um ambiente virtual executando:
+**python -m venv venv**
+Ative o ambiente virtual:
+- Windows: venv\Scripts\activate
+-macOS / Linux: source venv/bin/activate
+
+### 3) Baixe o pygame
+Com o ambiente virtual ativo, instale o Pygame
+Abra o terminal e digite:
+**pip intall pygame**
+
+### 4) Execute o jogo
+Aperte a flecha para rodar o jogo
