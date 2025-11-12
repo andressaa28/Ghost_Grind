@@ -82,7 +82,7 @@ Cada tipo de fantasma concede uma **pontuação diferente**!
     <td align="center" width="120">
       <a href="https://github.com/artista2">
         <img src="https://avatars.githubusercontent.com/artista2" width="80" style="border-radius:50%;" alt="Artista 2"/>
-        <br><sub>Bárbara Bovoce de Angelo</sub>
+        <br><sub>Bárbara Bovice de Angelo</sub>
       </a>
     </td>
     <td align="center" width="120">
