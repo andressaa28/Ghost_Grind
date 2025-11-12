@@ -133,7 +133,7 @@ python --version
 
 ### 1) Clonar o repositório
 No terminal, execute:
-```bash
+bash
 git clone https://github.com/seuusuario/ghost-grind.git
 cd ghost-grind
 
