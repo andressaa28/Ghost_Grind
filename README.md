@@ -74,20 +74,14 @@ Cada tipo de fantasma concede uma **pontuação diferente**!
 <table align="center">
   <tr>
     <td align="center" width="120">
-      <a href="https://github.com/artista1">
-        <img src="https://avatars.githubusercontent.com/artista1" width="80" style="border-radius:50%;" alt="Artista 1"/>
         <br><sub>Amanda Marçal de Souza</sub>
       </a>
     </td>
     <td align="center" width="120">
-      <a href="https://github.com/artista2">
-        <img src="https://avatars.githubusercontent.com/artista2" width="80" style="border-radius:50%;" alt="Artista 2"/>
         <br><sub>Bárbara Bovice de Angelo</sub>
       </a>
     </td>
     <td align="center" width="120">
-      <a href="https://github.com/artista3">
-        <img src="https://avatars.githubusercontent.com/artista3" width="80" style="border-radius:50%;" alt="Artista 3"/>
         <br><sub>Giovana Gardini Lourenço</sub>
       </a>
     </td>
@@ -96,18 +90,6 @@ Cada tipo de fantasma concede uma **pontuação diferente**!
 
 **Código base:**  
 - [Leonardo Nunes Armelin](https://github.com/Leonardo-Nunes-Armelim)
-
----
-## 🧾 Licença
-
-Este projeto é de uso educacional e não comercial.  
-O código original pertence a seus respectivos autores.
-
----
-
-<p align="center">
-  ⭐ Se gostou do projeto, não esqueça de dar um <b>Star</b> no repositório!
-</p>
 
 ---
 ## ⚙️ Instalação e Execução do Jogo
@@ -131,26 +113,50 @@ python --version
 
 > Deve parecer algo como Python 3.10.12
 
-### 1) Clonar o repositório
-No terminal, execute:
-bash
-git clone https://github.com/seuusuario/ghost-grind.git
-cd ghost-grind
+### 1) Baixar arquivo
+Para baixar aperte no botão CODE, em seguida faça download ZIP.
 
-> Caso prefira, você também pode baixar o repositório em formato ZIP e extrair os arquivos em uma pasta do seu notebook.
+<img width="512" height="512" alt="Título do Jogo" src="https://github.com/user-attachments/assets/76805882-9d56-4f9d-913d-24e7d7b9d621" />
+</p>
 
-### 2) Crie um ambiente virtual
-Certifique-se de que o Python está instalado corretamente.
-Depois, crie um ambiente virtual executando:
-**python -m venv venv**
-Ative o ambiente virtual:
-- Windows: venv\Scripts\activate
--macOS / Linux: source venv/bin/activate
 
-### 3) Baixe o pygame
+### 2) Extrair arquivos 
+Entre nos arquivos do seu computador e extraia os arquivos.
+
+<img width="512" height="512" alt="Título do Jogo" src="https://github.com/user-attachments/assets/8eba27c5-af40-423b-a256-7ff59fdcda14" />
+</p>
+
+### 3) Baixar Extensão
+Baixe a extensão PYTHON.
+
+<img width="512" height="512" alt="Título do Jogo" src="https://github.com/user-attachments/assets/510fd95c-318e-4687-a364-1e59c18583de" />
+</p>
+
+### 4) Crie um ambiente virtual
+Crie o ambiente virtual seguindo os passos a seguir:
+
+### 5) Baixe o pygame
 Com o ambiente virtual ativo, instale o Pygame
 Abra o terminal e digite:
 **pip intall pygame**
 
-### 4) Execute o jogo
-Aperte a flecha para rodar o jogo
+<img width="512" height="512" alt="Título do Jogo" src="https://github.com/user-attachments/assets/e4b6ed4a-2a66-473f-b584-06a54184b68f" />
+</p>
+
+### 6) Execute o jogo
+Aperte a flecha para rodar o jogo 
+
+<img width="512" height="512" alt="Título do Jogo" src="https://github.com/user-attachments/assets/8791c920-037b-4ec2-b11d-4dc56ac3bbda" />
+</p>
+
+---
+## 🧾 Licença
+
+Este projeto é de uso educacional e não comercial.  
+O código original pertence a seus respectivos autores.
+
+---
+
+<p align="center">
+  ⭐ Se gostou do projeto, não esqueça de dar um <b>Estrela</b> no repositório!
+</p>
