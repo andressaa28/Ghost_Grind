@@ -5,7 +5,6 @@
 </p>
 
 > Uma releitura divertida do clássico **Pac-Man**, com novas fases, personagens e desafios!
-
 ---
 ## 🎮 Sobre o jogo
 
@@ -147,6 +146,11 @@ Aperte a flecha para rodar o jogo
 
 <img width="512" height="512" alt="Título do Jogo" src="https://github.com/user-attachments/assets/8791c920-037b-4ec2-b11d-4dc56ac3bbda" />
 </p>
+
+---
+
+### Como se joga
+[<img src="https://img.icons8.com/ios-filled/30/FF0000/youtube-play.png" alt="YouTube" width="25"/>](https://youtu.be/83UndFqXpRI)
 
 ---
 ## 🧾 Licença
