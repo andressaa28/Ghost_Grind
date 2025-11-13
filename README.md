@@ -60,7 +60,7 @@ Cada tipo de fantasma concede uma **pontuação diferente**!
   <tr>
     <td align="center" width="140">
       <a href="https://github.com/andressaa28">
-        <img src="https://github.com/user-attachments/assets/af41a3ae-69bd-498b-8756-416c5ff3b3f3" width="90" style="border-radius:50%;" alt="Dev Principal"/>
+        <img src="https://github.com/user-attachments/assets/3d60d4ab-454f-4870-9b9d-63706bb16fdf" width="90" style="border-radius:50%;" alt="Dev Principal"/>
         <br><sub>Andressa de Abreu Albano</sub>
       </a>
     </td>
