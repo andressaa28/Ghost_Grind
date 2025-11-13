@@ -47,11 +47,10 @@ Cada tipo de fantasma concede uma **pontuação diferente**!
 ---
 ## 📸 Capturas de Tela
 
-> *(Adicione aqui imagens ou GIFs do gameplay, se quiser)*  
-> Exemplo:
-> ```markdown
-> ![Gameplay](link_da_imagem.gif)
-> ```
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/e0afe398-b23c-4e80-922d-f43d58adc4c6" alt="Captura de tela 1" width="49%" />
+  <img src="https://github.com/user-attachments/assets/33131ea7-9ecb-4164-b8d9-d5c688ed9957" alt="Captura de tela 2" width="49%" />
+</p>
 
 ---
 ## 👨‍💻 Autores
