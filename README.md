@@ -136,7 +136,7 @@ Crie o ambiente virtual seguindo os passos a seguir:
 ### 5) Baixe o pygame
 Com o ambiente virtual ativo, instale o Pygame
 Abra o terminal e digite:
-**pip intall pygame**
+**pip install pygame**
 
 <img width="512" height="512" alt="Título do Jogo" src="https://github.com/user-attachments/assets/e4b6ed4a-2a66-473f-b584-06a54184b68f" />
 </p>
@@ -147,7 +147,14 @@ Aperte a flecha para rodar o jogo
 <img width="512" height="512" alt="Título do Jogo" src="https://github.com/user-attachments/assets/8791c920-037b-4ec2-b11d-4dc56ac3bbda" />
 </p>
 
+### 7) Para jogar
+Depois de iniciar o jogo, siga as instruções na tela.  
+Seu objetivo é coletar todos os pontos e poções para avançar para a próxima fase.  
+Boa sorte! 
+
 ---
+### Tela da programação
+[<img src="https://img.icons8.com/ios-filled/30/FF0000/youtube-play.png" alt="YouTube" width="25"/>](...)
 
 ### Como se joga
 [<img src="https://img.icons8.com/ios-filled/30/FF0000/youtube-play.png" alt="YouTube" width="25"/>](https://youtu.be/83UndFqXpRI)
