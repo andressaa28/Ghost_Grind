@@ -154,7 +154,7 @@ Boa sorte!
 
 ---
 ### Tela da programação
-[<img src="https://img.icons8.com/ios-filled/30/FF0000/youtube-play.png" alt="YouTube" width="25"/>](...)
+[<img src="https://img.icons8.com/ios-filled/30/FF0000/youtube-play.png" alt="YouTube" width="25"/>](https://youtu.be/pg8LRv5X_a4)
 
 ### Como se joga
 [<img src="https://img.icons8.com/ios-filled/30/FF0000/youtube-play.png" alt="YouTube" width="25"/>](https://youtu.be/83UndFqXpRI)
